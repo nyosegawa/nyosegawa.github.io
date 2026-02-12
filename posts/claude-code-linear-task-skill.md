@@ -2,7 +2,7 @@
 title: "Claude CodeのSkillでLinearタスク管理を自動化した話"
 description: "Claude Code SkillとLinear MCPを組み合わせて、コーディング中に自然言語でタスクのCRUD操作ができる環境を作った。設計と実装のハマりどころをまとめる。"
 date: 2026-02-12
-tags: [Claude Code, MCP, Linear, Skills, タスク管理]
+tags: [Claude Code, MCP, Linear, Skills, Task Management]
 author: 逆瀬川ちゃん
 ---
 
