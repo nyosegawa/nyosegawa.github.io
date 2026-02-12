@@ -165,6 +165,29 @@ h2 a:hover, h3 a:hover, h4 a:hover {
 
 /* ====== Post List ====== */
 
+.postList .post,
+.postList li {
+  background: white;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  padding: 1.8em 2em;
+  margin-bottom: 1.2em;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.postList .post:hover,
+.postList li:hover {
+  box-shadow: 0 2px 12px rgba(107, 163, 199, 0.12);
+  border-color: rgba(107, 163, 199, 0.4);
+}
+
+.postList .post-title,
+.postList .post h2 {
+  font-size: 1.35em;
+  margin-bottom: 0.3em;
+  line-height: 1.4;
+}
+
 .postList a {
   text-decoration: none;
   color: var(--color-heading);
@@ -302,6 +325,18 @@ nav.toc a:hover {
   --color-line: #2e3640;
 }
 
+[data-theme="dark"] .postList .post,
+[data-theme="dark"] .postList li {
+  background: #1e2530;
+  border-color: var(--color-line);
+}
+
+[data-theme="dark"] .postList .post:hover,
+[data-theme="dark"] .postList li:hover {
+  box-shadow: 0 2px 12px rgba(122, 184, 216, 0.08);
+  border-color: rgba(122, 184, 216, 0.3);
+}
+
 [data-theme="dark"] .post-tags a {
   background-color: #243040;
   color: #7ab8d8;
@@ -338,5 +373,17 @@ nav.toc a:hover {
     --color-link: #7ab8d8;
     --color-link-hover: #a0d4ec;
     --color-line: #2e3640;
+  }
+
+  :root:not([data-theme="light"]) .postList .post,
+  :root:not([data-theme="light"]) .postList li {
+    background: #1e2530;
+    border-color: #2e3640;
+  }
+
+  :root:not([data-theme="light"]) .postList .post:hover,
+  :root:not([data-theme="light"]) .postList li:hover {
+    box-shadow: 0 2px 12px rgba(122, 184, 216, 0.08);
+    border-color: rgba(122, 184, 216, 0.3);
   }
 }
