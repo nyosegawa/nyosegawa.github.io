@@ -37,13 +37,17 @@
       "description": "Run Lume command",
       "command": "deno run -P=lume lume/cli.ts"
     },
+    "og": {
+      "description": "Generate OG card images for all posts",
+      "command": "python3 scripts/gen-og-images.py"
+    },
     "build": {
       "description": "Build the site for production",
-      "command": "deno task lume"
+      "command": "deno task og && deno task lume"
     },
     "serve": {
       "description": "Run and serve the site for development",
-      "command": "deno task lume -s"
+      "command": "deno task og && deno task lume -s"
     }
   },
   "compilerOptions": {
