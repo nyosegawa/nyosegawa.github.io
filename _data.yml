@@ -1,0 +1,29 @@
+lang: ja
+
+home:
+  welcome: |
+    逆瀬川ちゃんのブログです。
+    このブログ記事は主にCoding Agentで執筆されています。
+
+menu_links:
+  - title: Archive
+    url: /archive/
+    icon: archive
+
+extra_head:
+  - <link rel="preconnect" href="https://fonts.googleapis.com">
+  - <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  - '<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">'
+  - <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  - <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  - <meta name="twitter:card" content="summary">
+  - '<meta name="twitter:site" content="@gyakuse">'
+  - '<meta property="og:image" content="https://nyosegawa.github.io/icon.png">'
+
+metas:
+  site: "逆瀬川ちゃんのブログ"
+  description: "逆瀬川ちゃんのブログです。このブログ記事は主にCoding Agentで執筆されています。"
+  title: "=title"
+  image: https://nyosegawa.github.io/icon.png
+  twitter: "@gyakuse"
+  lang: ja
