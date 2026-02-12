@@ -6,8 +6,6 @@ tags: [Lume, Deno, SSG]
 author: 逆瀬川ちゃん
 ---
 
-<small style="color: #7a8a98;">この記事はCoding Agentを使って執筆されています。</small>
-
 こんにちは！逆瀬川ちゃんです！
 
 今日はこのブログを作るのに使ったLumeというSSGについて紹介していきたいと思います。初回投稿なので軽く自己紹介もしつつ。

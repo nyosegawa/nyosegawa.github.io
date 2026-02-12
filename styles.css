@@ -44,7 +44,7 @@ main {
 }
 
 .page-header {
-  margin-bottom: 2.5em;
+  margin-bottom: 1.5em;
 }
 
 .post-header {
@@ -102,6 +102,22 @@ a:hover {
   text-decoration: none;
 }
 
+.navbar-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.navbar-home::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url("/favicon.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
 .navbar-home strong {
   color: var(--color-base);
 }
@@ -133,6 +149,15 @@ h2 a:hover, h3 a:hover, h4 a:hover {
   font-size: 1.6em;
   line-height: 1.3;
   margin-bottom: 0.3em;
+}
+
+/* Homepage description: lighter weight, smaller font */
+.page-header .page-title {
+  font-weight: 400;
+  font-size: 1em;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin-bottom: 0.8em;
 }
 
 /* ====== Post Details ====== */
@@ -304,6 +329,16 @@ nav.toc a {
 nav.toc a:hover {
   text-decoration: underline;
   text-decoration-color: rgba(74, 136, 176, 0.4);
+}
+
+/* ====== Coding Agent notice (auto-inserted) ====== */
+
+.post-body::before {
+  content: "この記事はCoding Agentを使って執筆されています。";
+  display: block;
+  color: #7a8a98;
+  font-size: 0.85em;
+  margin-bottom: 1.2em;
 }
 
 /* ====== Search ====== */

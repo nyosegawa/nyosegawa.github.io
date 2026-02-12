@@ -6,8 +6,6 @@ tags: [Claude Code, MCP, Plugin, Linear, Notion]
 author: 逆瀬川ちゃん
 ---
 
-<small style="color: #7a8a98;">この記事はCoding Agentを使って執筆されています。</small>
-
 こんにちは！逆瀬川 ([@gyakuse](https://x.com/gyakuse)) です！
 
 今日はClaude CodeのMCP連携を使って、NotionとLinearとコードベースに散らばったプロジェクト情報をLinearに一気に統合した話をまとめていきたいと思います。やってみたら結構うまくいったので、その手法をClaude Code Pluginとして汎用化して公開するところまでやりました。
