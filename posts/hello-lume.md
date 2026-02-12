@@ -146,7 +146,7 @@ Denoの公式GitHub Actionがあるのでセットアップも楽です。`deno 
 
 ## References
 
-- https://lume.land/
-- https://github.com/lumeland/lume
-- https://lume.land/theme/simple-blog/
-- https://deno.com/blog/build-a-static-site-with-lume
+- [Lume - Static site generator for Deno](https://lume.land/)
+- [lumeland/lume - GitHub](https://github.com/lumeland/lume)
+- [Simple Blog Theme - Lume](https://lume.land/theme/simple-blog/)
+- [How to build a static site with Lume - Deno Blog](https://deno.com/blog/build-a-static-site-with-lume)
