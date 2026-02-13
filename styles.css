@@ -245,6 +245,7 @@ article p {
 article li {
   line-height: 1.8;
   margin-bottom: 0.3em;
+  overflow-wrap: anywhere;
 }
 
 /* ====== Table ====== */
