@@ -1,7 +1,7 @@
 ---
 title: "このブログをLumeで作った話"
 description: "Deno製SSG Lumeでブログを構築した経緯と、Lumeの特徴・セットアップ方法を紹介します"
-date: 2026-02-12
+date: 2026-02-12T10:00:00
 tags: [Lume, Deno, SSG]
 author: 逆瀬川ちゃん
 ---

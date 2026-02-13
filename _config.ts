@@ -7,6 +7,9 @@ const site = lume({
 
 site.use(blog());
 
+// Override theme's archive_result.page.js to fix empty tag/author bug
+site.ignore("archive_result.page.js");
+
 // Copy generated OG images to output
 site.copy("og");
 

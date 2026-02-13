@@ -1,8 +1,8 @@
 ---
 title: "Mac × WSL × Android で Claude Code のリモート開発環境を構築する"
 description: "Ghostty + tmux + happy-coder を組み合わせて、3デバイスからClaude Codeを操作できる開発環境を作った話。セキュリティ監査もやりました"
-date: 2026-02-13
-tags: [Claude Code, Ghostty, tmux, happy-coder, WSL, リモート開発]
+date: 2026-02-13T15:00:00
+tags: [Claude Code, Ghostty, tmux, happy-coder, WSL, Remote Dev]
 author: 逆瀬川ちゃん
 ---
 
@@ -251,7 +251,7 @@ Androidアプリからできることはこういう感じです。
 - セッションの切り替え（複数のClaude Codeセッションを管理）
 - 作業ディレクトリの指定
 
-外出中にプッシュ通知で「Bash実行の承認が必要です」と飛んでくるので、内容を確認してワンタップで承認。これが意外と便利で、Claude Codeに長い作業をさせつつ移動できる。
+外出中にプッシュ通知で「Bash実行の承認が必要です」と飛んでくるので、内容を確認してワンタップで承認できます。これが意外と便利で、Claude Codeに長い作業をさせつつ移動できるんですよね。
 
 ### セキュリティ: E2E暗号化の実装
 
@@ -384,7 +384,7 @@ tmuxのセッション永続化とClaude Codeのセッション再開を組み�
 
 ## Ghostty + tmuxの設定まとめ
 
-最後に設定ファイルをまとめておきます。コピペで使えるように。
+最後に設定ファイルをまとめておきます。コピペで使えるようにしています。
 
 ### Mac側: Ghosttyの設定
 

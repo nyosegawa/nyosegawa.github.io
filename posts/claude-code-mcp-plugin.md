@@ -1,7 +1,7 @@
 ---
 title: "Claude Code × MCP × Pluginでプロジェクト管理を自動化する"
 description: "Notion/Linear/コードベースに散らばった情報をClaude CodeのMCP連携でLinearに統合した実体験と、その手法をPluginとして汎用化・公開した話"
-date: 2026-02-12
+date: 2026-02-12T14:00:00
 tags: [Claude Code, MCP, Plugin, Linear, Notion]
 author: 逆瀬川ちゃん
 ---
