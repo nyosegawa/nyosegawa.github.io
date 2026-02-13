@@ -147,9 +147,9 @@ set -euo pipefail
 SESSION_DEV="dev"
 
 start_session() {
-  # happy daemonを起動（Android連携用）
+  # happy daemonのステータス確認（Android連携用、happyコマンド実行時に自動起動済み）
   if command -v happy &>/dev/null; then
-    happy daemon start 2>/dev/null || true
+    happy daemon status 2>/dev/null || true
   fi
   # tmuxセッションを作成
   if ! tmux has-session -t "$SESSION_DEV" 2>/dev/null; then
@@ -221,16 +221,13 @@ npm install -g happy-coder
 happy
 ```
 
-初回は `happy auth login` で認証します。ターミナルにQRコードが表示されるので、AndroidのHappy Coderアプリでスキャンします。これでペアリング完了です。
+初回は `happy` を実行するとターミナルにQRコードが表示されるので、AndroidのHappy Coderアプリでスキャンします。これでペアリング完了です。
 
-### daemonモード
+### daemonの自動起動
 
-`happy` コマンドを直接叩くとフォアグラウンドで動きますが、daemonモードにするとバックグラウンドで常駐してくれます。
+`happy` コマンドを実行するとdaemonがバックグラウンドで自動起動します。明示的に `happy daemon start` を叩く必要はありません。
 
 ```bash
-# daemon起動
-happy daemon start
-
 # ステータス確認
 happy daemon status
 
@@ -239,8 +236,6 @@ happy daemon stop
 ```
 
 daemonが常駐していれば、Androidアプリを開くだけでWSL上のClaude Codeセッションにアクセスできます。tmuxの中で `happy` を動かす必要はなくて、daemonが独立してAndroidからの接続を待ち受けています。
-
-実は `happy` コマンドを実行するだけでdaemonは自動起動します。明示的に `happy daemon start` しなくても裏で立ち上がってくれる親切設計ですね。
 
 ### 使い方
 
@@ -426,11 +421,8 @@ fnm install --lts
 # happy-coderのインストール
 npm install -g happy-coder
 
-# 認証
-happy auth login
-
-# daemon起動（以降自動起動する）
-happy daemon start
+# 初回認証（QRコードが表示される。daemonも自動起動する）
+happy
 ```
 
 ## まとめ
