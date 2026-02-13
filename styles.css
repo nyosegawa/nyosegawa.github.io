@@ -227,6 +227,10 @@ h2 a:hover, h3 a:hover, h4 a:hover {
 
 /* ====== Post Content ====== */
 
+article {
+  overflow-wrap: anywhere;
+}
+
 article a {
   color: var(--color-link);
   text-decoration: underline;
@@ -245,7 +249,6 @@ article p {
 article li {
   line-height: 1.8;
   margin-bottom: 0.3em;
-  overflow-wrap: anywhere;
 }
 
 /* ====== Table ====== */
