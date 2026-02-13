@@ -32,11 +32,19 @@ site.preprocess([".md"], (pages) => {
   }
 });
 
-// Open external links in new tab
+// Post-process HTML
 site.process([".html"], (pages) => {
   for (const page of pages) {
     const doc = page.document;
     if (!doc) continue;
+
+    // Remove "Home - " prefix from top page title
+    const title = doc.querySelector("title");
+    if (title?.textContent?.startsWith("Home - ")) {
+      title.textContent = title.textContent.replace("Home - ", "");
+    }
+
+    // Open external links in new tab
     doc.querySelectorAll("a[href^='http']").forEach((link) => {
       const href = link.getAttribute("href");
       if (href && !href.startsWith("https://nyosegawa.github.io")) {
