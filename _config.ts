@@ -5,7 +5,13 @@ const site = lume({
   location: new URL("https://nyosegawa.github.io"),
 });
 
-site.use(blog());
+site.use(blog({
+  date: {
+    formats: {
+      HUMAN_DATE: "yyyy-MM-dd",
+    },
+  },
+}));
 
 // Override theme's archive_result.page.js to fix empty tag/author bug
 site.ignore("archive_result.page.js");
@@ -23,6 +29,21 @@ site.preprocess([".md"], (pages) => {
         page.data.image = `/og/${slug}.png`;
       }
     }
+  }
+});
+
+// Open external links in new tab
+site.process([".html"], (pages) => {
+  for (const page of pages) {
+    const doc = page.document;
+    if (!doc) continue;
+    doc.querySelectorAll("a[href^='http']").forEach((link) => {
+      const href = link.getAttribute("href");
+      if (href && !href.startsWith("https://nyosegawa.github.io")) {
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener noreferrer");
+      }
+    });
   }
 });
 
