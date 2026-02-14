@@ -16,8 +16,9 @@ site.use(blog({
 // Override theme's archive_result.page.js to fix empty tag/author bug
 site.ignore("archive_result.page.js");
 
-// Copy generated OG images to output
+// Copy static assets to output
 site.copy("og");
+site.copy("img");
 
 // Auto-set OG image for posts based on slug
 site.preprocess([".md"], (pages) => {
