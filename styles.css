@@ -242,6 +242,13 @@ article a:hover {
   text-decoration-color: var(--color-link-hover);
 }
 
+article img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.6em;
+  margin: 0.5em 0;
+}
+
 article p {
   line-height: 1.9;
 }
