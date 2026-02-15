@@ -8,17 +8,17 @@ author: 逆瀬川ちゃん
 
 こんにちは！逆瀬川 ([@gyakuse](https://x.com/gyakuse)) です！
 
-今日は友人のDiscord botがプロンプトインジェクションされてIP開示されていた件をきっかけに、3層防御ライブラリ「openclaw-defender」を作った話をまとめていきたいと思います。
+今日はともだちのDiscord botがプロンプトインジェクションされてIP開示されていた件をきっかけに、3層防御ライブラリ「openclaw-defender」を作った話をまとめていきたいと思います。
 
 <!--more-->
 
 ## 前日譚: 友人のbotが攻撃されていた
 
-友人のニケちゃん ([@tegnike](https://x.com/tegnike)) がDiscordで[OpenClaw](https://github.com/openclaw/openclaw)ベースのbotを公開していました。OpenClawはAIエージェントフレームワークで、Discord botとしてデプロイできるものです。
+ともだちのニケちゃん ([@tegnike](https://x.com/tegnike)) がDiscordで[OpenClaw](https://github.com/openclaw/openclaw)ベースのbotを公開していました。OpenClawはAIエージェントフレームワークで、Discord botとしてデプロイできるものです。
 
-ところが[IP開示されたりプロンプトインジェクションされたり](https://x.com/tegnike/status/2022915354155212982)していました。Discord上でLLMを公開すると、不特定多数のユーザーからの入力を受けることになるので攻撃対象になりやすい。
+早速、[IP開示されたりプロンプトインジェクションされたり](https://x.com/tegnike/status/2022915354155212982)とても楽しそうにしていました。
 
-わたしも「プロンプトインジェクションしたいな〜」と思ったのですが、冷静に考えると今後OpenClawのセキュリティはどんどん強化されていく可能性が高い。完璧に突破してからでは遅いので先に盾を作ろうと思いました。
+わたしも「プロンプトインジェクションしたいな〜」と思ったのですが、冷静に考えると今後OpenClawのセキュリティはどんどん強化されていく可能性が高い。完璧に強化されたものでも攻撃できる術をもてるようにまずはどんな強化がされるか理解しておくべきです。そんなわけで盾を作ることにしました。
 
 ## OpenClawのセキュリティ実装を分析する
 
