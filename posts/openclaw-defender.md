@@ -151,7 +151,7 @@ export const JUDGMENT_SYSTEM_PROMPT = `You are a prompt-injection classifier...
 
 ## 検証: 高度な攻撃パターンに対する3層防御結果
 
-実際にさまざまな攻撃パターンでテストしました。Cerebras上のLlama 3.3 70Bを使ったLayer 3の結果も含めた一覧です。
+実際にさまざまな攻撃パターンでテストしました。Cerebras上のGPT-OSS 120Bを使ったLayer 3の結果も含めた一覧です。
 
 ### 管理者なりすまし
 
@@ -285,7 +285,7 @@ const scanner = createScanner({
     enabled: true,
     adapter: "cerebras",  // or "openai", "anthropic", "custom"
     apiKey: process.env.CEREBRAS_API_KEY,
-    model: "llama-3.3-70b",
+    model: "gpt-oss-120b",
     triggerThreshold: 0.3,
     confirmThreshold: 0.7,
     timeoutMs: 5000,
