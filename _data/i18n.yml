@@ -1,0 +1,22 @@
+nav:
+  toc: 目次
+  next_post: 次の記事 →
+  previous_post: ← 前の記事
+  continue_reading: 続きを読む →
+  archive_title: アーカイブ
+  archive: 他の記事は<a href="/archive/">アーカイブ</a>にあります。
+  back: ← 戻る
+  page: ページ
+  next: 次へ →
+  previous: ← 前へ
+post:
+  by: by
+  reading_time: min read
+search:
+  by_author: 投稿者
+  by_tag: タグ
+  tags: タグ
+  authors: 投稿者
+comments:
+  title: コメント
+  empty: コメントはまだありません

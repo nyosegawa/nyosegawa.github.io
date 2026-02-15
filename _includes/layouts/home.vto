@@ -1,0 +1,47 @@
+---
+layout: layouts/base.vto
+bodyClass: body-home
+---
+
+{{ if pagination.page === 1 }}
+<header class="page-header">
+  <h1 class="page-title">{{ home.welcome }}</h1>
+
+  <div class="search" id="search"></div>
+</header>
+{{ else }}
+<header class="page-header">
+  <h1 class="page-title">{{ i18n.nav.page }} {{ pagination.page }}</h1>
+</header>
+{{ /if }}
+
+<section class="postList">
+  {{ for post of results }}
+  <article class="post">
+    <header class="post-header">
+      <h2 class="post-title">
+        <a href="{{ post.url }}" {{ if post.url == url }} aria-current="page"{{ /if }}>
+          {{ post.title || post.url }}
+        </a>
+      </h2>
+
+      {{ include "templates/post-details.vto" {
+        date: post.date,
+        tags: post.tags,
+        author: post.author,
+        readingInfo: post.readingInfo
+        } }}
+    </header>
+
+    <div class="post-excerpt body">
+      {{ post.excerpt |> md }}
+    </div>
+
+    <a href="{{ post.url }}" class="post-link">
+      {{ i18n.nav.continue_reading }}
+    </a>
+  </article>
+{{ /for }}
+</section>
+
+{{ include "templates/pagination.vto" }}

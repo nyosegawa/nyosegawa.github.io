@@ -16,6 +16,9 @@ site.use(blog({
 // Override theme's archive_result.page.js to fix empty tag/author bug
 site.ignore("archive_result.page.js");
 
+// Override theme's index.vto with custom paginated home page
+site.ignore("index.vto");
+
 // Copy static assets to output
 site.copy("og");
 site.copy("img");
