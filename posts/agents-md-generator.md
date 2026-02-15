@@ -138,6 +138,7 @@ hookの判定ロジックは「`.git`を除いてルート直下の項目が3個
 
 ## References
 
+- [@kenn - 後方互換性についてのツイート](https://x.com/kenn/status/2022862500958765227)
 - [agents-md-generator (GitHub)](https://github.com/nyosegawa/agents-md-generator)
 - [AGENTS.md 公式サイト](https://agents.md/)
 - [AGENTS.md GitHub リポジトリ](https://github.com/agentsmd/agents.md)
