@@ -1,5 +1,5 @@
 ---
-title: "Discord botのプロンプトインジェクション対策ライブラリを作った"
+title: "OpenClaw botのプロンプトインジェクション対策ライブラリを作った話"
 description: "友人のDiscord botがプロンプトインジェクションでIP開示されていたので、OpenClawのコードベースを分析して3層防御ライブラリ openclaw-defender を作った話"
 date: 2026-02-15
 tags: [セキュリティ, プロンプトインジェクション, TypeScript, OpenClaw, Cerebras]
