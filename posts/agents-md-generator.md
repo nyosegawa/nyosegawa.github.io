@@ -69,38 +69,53 @@ LLMが確実に従える指示の数には上限があります。フロンテ�
 
 生成されるテンプレートにはいくつかの設計判断を入れています。
 
-### 冒頭の2行が最重要
+### Core Principlesは明確にセクション化する
 
 ```markdown
-**CRITICAL: Do NOT maintain backward compatibility unless explicitly requested by the user.**
+## Core Principles
 
-**TARGET: Keep total instructions under 20-30 lines.**
+- **Do NOT maintain backward compatibility** unless explicitly requested. Break things boldly.
+- **Keep this file under 20-30 lines of instructions.** Every line competes for the agent's limited context budget (~150-200 total).
 ```
 
-テンプレートの最初の2行は「後方互換性を捨てること」と「20-30行バジェット」です。この2つはプロジェクトのフェーズに関係なく常に有効なルールなので、最も目立つ位置に置いています。新規プロジェクトに後方互換性は要らないし、プロジェクトが育った後も大胆なリファクタリングを優先するほうがコードは健全です。
+「後方互換性を捨てること」と「20-30行バジェット」はプロジェクトのフェーズに関係なく常に有効なルールです。当初はセクション見出しのない太字テキストとして冒頭に置いていましたが、見出しのない浮遊テキストはエージェントにとって構造的に曖昧で、扱いを迷わせることがわかりました。`## Core Principles`として明確にセクション化しています。
 
 ### プレースホルダーは「埋めて消す」ためにある
 
 Project Overview、Commands、Code Conventions、Architectureの各セクションはプレースホルダーとして置いています。ここに具体的な内容を書き込んでいくのですが、重要なのは埋めたらプレースホルダーのコメントを消すこと。プレースホルダー自体がバジェットを消費するからです。
 
-### Maintenance Notesだけは消さない
+### Maintenance Notesは消さない — そしてそう明示する
 
 テンプレート内で唯一「消すな」と位置づけているのがMaintenance Notesセクションです。
 
 ```markdown
 ## Maintenance Notes
 
+<!-- This section is permanent. Do not delete. -->
+
 **Keep this file lean and current:**
 
-1. **Remove placeholder sections** once you fill them in
+1. **Remove placeholder sections** (sections still containing `[To be determined]` or `[Add your ... here]`) once you fill them in
 2. **Review regularly** - stale instructions poison the agent's context
-3. **CRITICAL: Keep total under 20-30 lines**
+3. **CRITICAL: Keep total under 20-30 lines** - move detailed docs to separate files and reference them
 4. **Update commands immediately** when workflows change
 5. **Rewrite Architecture section** when major architectural changes occur
 6. **Delete anything the agent can infer** from your code
 ```
 
-AGENTS.mdが「設定ファイル」と誤解されて放置されるのを防ぐためのリマインダーです。これがないと書きっぱなしになって、気づいたら全部古くなっている。
+AGENTS.mdが「設定ファイル」と誤解されて放置されるのを防ぐためのリマインダーです。ここで重要なのは`<!-- This section is permanent. Do not delete. -->`というHTMLコメントです。実際に運用していて、「Remove placeholder sections」「Delete anything the agent can infer」というルールをエージェントがMaintenance Notesセクション自体に適用してしまい、セクションごと削除されるケースがありました。HTMLコメントで明示的に保護し、「placeholder sections」の定義も`[To be determined]`や`[Add your ... here]`を含むセクションと具体化することで、この自己参照的な削除を防いでいます。
+
+### ファイル構造をHTMLコメントで守る
+
+テンプレートにはもう一つ、ファイル冒頭にHTMLコメントを入れています。
+
+```markdown
+# Agent Guidelines
+
+<!-- Do not restructure or delete sections. Update individual values in-place when they change. -->
+```
+
+エージェントにプロジェクトの作業を任せていると、AGENTS.md自体の構造を「改善」しようとして大幅にリライトされることがあります。各セクションにはインラインのHTMLコメントで更新ルールを書いていますが、構造ごと書き換えられるとインラインコメントも一緒に消えます。冒頭のコメントは、個別セクションの保護が機能するための外壁です。
 
 ## 実現方法: git hookでclone時に自動生成
 
