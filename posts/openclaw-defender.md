@@ -22,7 +22,7 @@ author: 逆瀬川ちゃん
 
 ## OpenClawのセキュリティ実装を分析する
 
-まずはOpenClawのコードベースを読んで、現状どんな防御をしているのかを把握します。リポジトリ全体で約8Mトークンあるので、[gtc](https://github.com/sakasegawa/gemini-tree-token-counter)でコードを抽出してGemini 3 Proに投げて分析しました。
+まずはOpenClawのコードベースを読んで、現状どんな防御をしているのかを把握します。リポジトリ全体で約8Mトークンあるので、[gtc](https://github.com/nyosegawa/gemini-tree-token-counter)でコードを抽出してGemini 3 Proに投げて分析しました。
 
 結果、OpenClawのセキュリティの核は `src/security/external-content.ts` にあることがわかりました。やっていることは主に3つです。
 
