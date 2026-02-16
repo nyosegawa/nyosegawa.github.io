@@ -1,6 +1,6 @@
 ---
 title: "AGENTS.mdを自動で育てる仕組みを作った"
-description: "新規リポジトリをcloneしたら勝手にAGENTS.mdが生えてきて、プロジェクトと一緒に育っていく仕組みをgit hookで作った話"
+description: "新規リポジトリをcloneしたら勝手にAGENTS.mdが生えてきて、プロジェクトと一緒に育っていく仕組みをシェルラッパーで作った話"
 date: 2026-02-15
 tags: [Git, AGENTS.md, Claude Code, Coding Agent]
 author: 逆瀬川ちゃん
@@ -117,18 +117,20 @@ AGENTS.mdが「設定ファイル」と誤解されて放置されるのを防�
 
 エージェントにプロジェクトの作業を任せていると、AGENTS.md自体の構造を「改善」しようとして大幅にリライトされることがあります。各セクションにはインラインのHTMLコメントで更新ルールを書いていますが、構造ごと書き換えられるとインラインコメントも一緒に消えます。冒頭のコメントは、個別セクションの保護が機能するための外壁です。
 
-## 実現方法: git hookでclone時に自動生成
+## 実現方法: シェルラッパーでclone時に自動生成
 
-実現方法自体はシンプルで、gitの[post-checkout hook](https://git-scm.com/docs/githooks#_post_checkout)と[template directory](https://git-scm.com/docs/git-init)を組み合わせただけです。
+（※以前ここで書いていたgit hook方式は、空リポジトリのclone時に`post-checkout`が発火しないというgitの仕様を見落としていたため、シェルラッパー方式に修正しました）
 
-`init.templateDir`を設定すると、`git init`や`git clone`のたびにテンプレートディレクトリの中身が`.git/`にコピーされます。ここにpost-checkout hookを置いておけば、すべての新規リポジトリに自動でhookが適用されます。hookの中身は「空リポジトリならAGENTS.mdを生成する」というだけです。
+実現方法自体はシンプルで、`git()` シェルラッパー関数を定義して `git clone` の完了後にAGENTS.mdを生成するだけです。
+
+`.bashrc`や`.zshrc`でスクリプトをsourceすると、`git`コマンドが薄いラッパー関数で上書きされます。内部では`command git`で本物のgitを呼び、cloneが成功したあとにclone先ディレクトリを特定して「空リポジトリならAGENTS.mdを生成する」というロジックが走ります。
 
 ```bash
-# セットアップ（コピペで終わり）
-mkdir -p ~/.git-templates/hooks
-cp post-checkout ~/.git-templates/hooks/post-checkout
-chmod +x ~/.git-templates/hooks/post-checkout
-git config --global init.templateDir ~/.git-templates
+# セットアップ（ghqを使っている場合）
+ghq get nyosegawa/agents-md-generator
+
+# .zshrc / .bashrc に追加
+source "$(ghq root)/github.com/nyosegawa/agents-md-generator/agents-md-seed.sh"
 ```
 
 これ以降、空リポジトリをcloneすると自動でAGENTS.mdとCLAUDE.md（シンボリンク）が生成されます。ghqでも動きます。
@@ -143,13 +145,15 @@ ghq get yourname/new-repo
 # → 同様に生成される
 ```
 
-hookの判定ロジックは「`.git`を除いてルート直下の項目が3個未満なら空とみなす」としているので、READMEとLICENSEだけのリポジトリにも生成されます。既存のコードがあるリポジトリやAGENTS.mdがすでにあるリポジトリでは何もしません。
+当初はgitの`post-checkout` hookと`init.templateDir`を組み合わせる方式で実装していましたが、コミットが0件のリポジトリをcloneした場合にcheckoutが発生せずhookが発火しないことがわかりました。gitには`post-clone`に相当するhookが存在しないため、シェルラッパー方式に切り替えています。
+
+判定ロジックは「`.git`を除いてルート直下の項目が3個未満なら空とみなす」としているので、READMEとLICENSEだけのリポジトリにも生成されます。既存のコードがあるリポジトリやAGENTS.mdがすでにあるリポジトリでは何もしません。テンプレートをカスタマイズしたい場合は、`~/.config/agents-md/template.md`にファイルを置くか、環境変数`AGENTS_MD_TEMPLATE`でパスを指定できます。
 
 ## まとめ
 
 - AGENTS.mdは設定ファイルではなく生きたドキュメント。20-30行のバジェットを守り、育てて刈り込むことを前提に運用する
 - [agents-md-generator](https://github.com/nyosegawa/agents-md-generator)で、cloneした瞬間に育てるための足場が自動生成されるようにした
-- 実現方法はgitのtemplate directory + post-checkout hook。シンプル
+- 実現方法はgitコマンドのシェルラッパー。`.bashrc`/`.zshrc`にsource一行で完結する
 
 ## References
 
@@ -160,5 +164,4 @@ hookの判定ロジックは「`.git`を除いてルート直下の項目が3個
 - [AGENTS.md Emerges as Open Standard for AI Coding Agents (InfoQ)](https://www.infoq.com/news/2025/08/agents-md/)
 - [Best Practices for Claude Code](https://code.claude.com/docs/en/best-practices)
 - [Writing a good CLAUDE.md (HumanLayer)](https://www.humanlayer.dev/blog/writing-a-good-claude-md)
-- [Git - githooks Documentation](https://git-scm.com/docs/githooks)
-- [Git - git-init Documentation (template directory)](https://git-scm.com/docs/git-init)
+- [agents-md-seed.sh (GitHub)](https://github.com/nyosegawa/agents-md-generator/blob/main/agents-md-seed.sh)
