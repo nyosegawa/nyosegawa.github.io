@@ -363,23 +363,23 @@ M2 Air上でFP16推論時のRTFは0.02〜0.05程度です。15秒の発話を0.3
 
 ## 今後の見立て
 
-### 短期: ノイズ耐性の改善
+### ノイズ耐性の改善
 
 ReazonSpeechのKER 21.65%はまだ高いです。speed perturbation とノイズ注入のGPU側実装、SpecAugmentパラメータのチューニングで改善の余地があります。[Zhang et al. (2025)](https://www.mdpi.com/1424-8220/25/14/4288) はsemantic-aware SpecAugmentでCERを26.17%→16.88%に改善しています。
 
-### 短期: 長音符・小書き仮名の対策
+### 長音符・小書き仮名の対策
 
 後処理ルールベースの修正と、ラベル正規化（長音を直前の母音に展開する等）を検討しています。
 
-### 中期: ピッチアクセントの活用
+### ピッチアクセントの活用
 
 前述のサーベイで触れた通り、wav2vec2のエンコーダはピッチアクセント情報を中間層に保持しています ([de la Fuente & Jurafsky, 2024](https://arxiv.org/abs/2408.13678); [Koriyama, SSW13 2025](https://arxiv.org/abs/2507.03912))。現在のInterCTCアーキテクチャにピッチアクセント補助タスクを追加することは自然な拡張です。[Kubo et al. (2025)](https://arxiv.org/abs/2509.20655) はCTCの3並列マルチタスク（カタカナ + テキスト + F0分類）で日本語のモーララベルエラー率を12.3%→7.1%に改善しています。
 
-### 中期: LLM誤り訂正の体系的評価
+### LLM誤り訂正の体系的評価
 
 ひらがなASR → LLM での意図理解精度を体系的に評価するベンチマークを構築したいと考えています。[Ko et al. (2024)](https://arxiv.org/abs/2408.16180) の日本語GERベンチマークを参考に、ひらがな入力に特化した評価フレームワークを設計します。
 
-### 長期: ONNX/CoreML変換
+### ONNX/CoreML変換
 
 [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) はONNX Runtimeベースでモバイルを含む12のプログラミング言語をサポートしており、wav2vec2 + CTC モデルのONNX変換先として最適です。[Whisper量子化の研究 (2025)](https://arxiv.org/html/2503.09905v1) ではINT8量子化でモデルサイズが68%削減、CoreML encoderでCPU比3倍以上の高速化が達成されています。
 
