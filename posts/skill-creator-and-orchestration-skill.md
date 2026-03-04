@@ -367,23 +367,6 @@ description最適化のためだけに3つのスクリプトを書いたskill-cr
 
 基本は「なぜそれが必要か」を説明します。ただし、スキーマのフィールド名の一致やセキュリティに関わる箇所など、本当にクリティカルな制約だけは明示的なMUSTで書きます。
 
-### Self-Improving Skillsの萌芽
-
-skill-creatorのDescription Optimizationは、「スキルが自分自身を改善する」パターンの原型です。train/test分割、Extended Thinking、blinded_historyによる過学習防止といった仕組みを持った自己改善ループは、将来的にオーケストレーションスキル自体に組み込まれる可能性があります。
-
-```
-スキル実行 → メトリクス自動収集
-  ↓
-閾値を下回った場合
-  ↓
-自己改善ループ起動
-  ├── 失敗パターン分析
-  ├── SKILL.md or description改善
-  └── 再テスト → 反映
-```
-
-ただし、これには統計的信頼性の仕組みが不可欠です。skill-creatorがtrain/test分割や改善モデルへのtest結果の秘匿をやっているのは、過学習という現実的なリスクへの対策です。
-
 ### skill-creatorの限界 — スキル間のAttention競合問題
 
 ここまでskill-creatorの設計を称賛してきましたが、1つ大きな限界があります。**他のスキルとのAttention競合を考慮していない**という点です。
