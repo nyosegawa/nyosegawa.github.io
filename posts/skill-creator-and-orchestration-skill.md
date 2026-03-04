@@ -34,7 +34,7 @@ your-skill-name/
 
 SKILL.mdにはYAML frontmatter（`name`と`description`）とMarkdownボディが含まれます。`description`がトリガーの判定に使われ、ボディにはスキルが呼ばれた後の詳細な指示を書きます。
 
-設計の核心は**Progressive Disclosure（段階的開示）**です。3層のレイジーローディングで、必要な情報だけを必要な時に読み込みます。
+設計の核心はProgressive Disclosure（段階的開示）です。3層のレイジーローディングで、必要な情報だけを必要な時に読み込みます。
 
 | 層 | 内容 | 読み込みタイミング |
 |---|---|---|
