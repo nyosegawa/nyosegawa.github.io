@@ -2,7 +2,7 @@
 title: "skill-creatorから学ぶSkill設計と、Orchestration Skillの作り方"
 description: "Anthropic公式のskill-creatorを分析し、Agent Skill設計のベストプラクティスを抽出。Sub-agent型とSkill Chain型の2つのオーケストレーション戦略を、自作のagentic-benchとの比較を通じて考察します。"
 date: 2026-03-04
-tags: [agent-skills, skill-creator, orchestration, claude, anthropic]
+tags: [Agent Skills, skill-creator, orchestration, claude, anthropic]
 author: 逆瀬川ちゃん
 ---
 
