@@ -367,21 +367,21 @@ description最適化のためだけに3つのスクリプトを書いたskill-cr
 
 基本は「なぜそれが必要か」を説明します。ただし、スキーマのフィールド名の一致やセキュリティに関わる箇所など、本当にクリティカルな制約だけは明示的なMUSTで書きます。
 
-### skill-creatorの限界 — スキル間のAttention競合問題
+### skill-creatorの課題 — スキル間のAttention競合の制御
 
-ここまでskill-creatorの設計を称賛してきましたが、1つ大きな限界があります。**他のスキルとのAttention競合を考慮していない**という点です。
+ここまでskill-creatorの設計を見てきましたが、Attention競合の扱いには改善の余地があります。
 
-skill-creatorのDescription Optimizationは、`claude -p`で対象スキルだけを一時的にインストールした状態でテストしています。improve_description.pyには "The description competes with other skills for Claude's attention — make it distinctive and immediately recognizable" というヒントが書かれていますし、SKILL.mdのテストクエリ設計でも "cases where this skill competes with another but should win" を含めろと言っています。つまり、競合の存在は認識しています。
+skill-creatorのDescription Optimizationは、`claude -p`でテスト対象スキルのコマンドファイルを一時的に作成して評価します。このとき、実行者の環境にインストール済みの他のスキルも一緒にロードされるため、ある程度の競合環境でのテストにはなっています。improve_description.pyには "The description competes with other skills for Claude's attention — make it distinctive and immediately recognizable" というヒントが書かれていますし、SKILL.mdのテストクエリ設計でも "cases where this skill competes with another but should win" を含めろと言っています。競合の存在を認識し、暗黙的にテストもされています。
 
-しかし、実際の最適化ループでは他のスキルが入っていません。現実のユーザー環境には10個、20個のスキルが同時にインストールされていることがあり、それらのdescriptionがすべてシステムプロンプトに注入されます。あるスキルのdescriptionを「押し強め」に最適化した結果、隣のスキルのトリガー率が下がる、という事態は十分に起こりえます。
+ただし、この競合環境は**制御されていません**。どのスキルが並んでいるかは実行者の環境次第で、eval setにも「このクエリではスキルAではなくスキルBがトリガーされるべき」という相対的な判定がありません。あるスキルのdescriptionを「押し強め」に最適化した結果、隣のスキルのトリガー率が下がる、という事態は十分に起こりえますが、それを検出する仕組みがないのです。
 
-これは個別スキルの最適化ではなく、**スキルポートフォリオ全体の最適化**という未解決の問題です。具体的には以下のような課題があります。
+これは個別スキルの最適化を超えた、**スキルポートフォリオ全体の最適化**という課題です。
 
 - **ゼロサム的Attention競合**: スキルAのdescriptionを強化すると、類似ドメインのスキルBのトリガー率が低下する可能性
-- **テスト環境と本番環境の乖離**: スキル単体でのテスト結果が、多数のスキルが共存する環境で再現しない
+- **競合環境の非制御**: テスト時にどのスキルが共存しているかが実行者依存で、結果の再現性が低い
 - **description長のジレンマ**: 詳しく書くほどトリガー精度は上がるが、全スキルのdescriptionが長くなるとシステムプロンプト全体が膨張する
 
-現状のskill-creatorはこれらに対する解決策を持っていません。将来的には、インストール済みの全スキルを含めた状態でのDescription Optimizationや、スキルセット全体でのトリガー精度を最適化する仕組みが必要になるでしょう。
+将来的には、競合スキルを明示的に指定した状態でのDescription Optimizationや、スキルセット全体でのトリガー精度を最適化する仕組みがあると、より実践的になるでしょう。
 
 ### まとめ
 
