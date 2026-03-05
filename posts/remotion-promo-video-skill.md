@@ -29,7 +29,7 @@ author: 逆瀬川ちゃん
 - 実アプリを撮影せず、アプリの状態遷移を再現するmockベースで動画を作ること
 - フレームスクショを評価入力にして、Coding Agentが自己改善するループを回すこと
 
-Remotion公式Skillはこの2点を支える土台として使い、制作側の判断は `remotion-promo-video-factory` としてSkill化しました。
+Remotion公式Skillはこの2点を支える土台として使い、制作側の判断は [`remotion-promo-video-factory`](https://github.com/nyosegawa/skills/blob/main/skills/remotion-promo-video-factory/SKILL.md) としてSkill化しました。
 
 ## 背景: 何がつらかったか
 
