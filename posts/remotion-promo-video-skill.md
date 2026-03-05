@@ -173,7 +173,7 @@ const END = 21;
 
 ## この2点をSkillにした
 
-作成したのは `remotion-promo-video-factory` です。任意のアプリ紹介動画で、制作品質を再現しやすくすることが目的です。
+作成したのは [`remotion-promo-video-factory`](https://github.com/nyosegawa/skills/blob/main/skills/remotion-promo-video-factory/SKILL.md) です。任意のアプリ紹介動画で、制作品質を再現しやすくすることが目的です。
 
 この Skill では次を固定化しました。
 
