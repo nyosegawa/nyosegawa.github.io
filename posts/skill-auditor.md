@@ -10,7 +10,7 @@ author: 逆瀬川ちゃん
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！
 
-今日は[前回の記事](https://nyosegawa.github.io/posts/skill-creator-and-orchestration-skill/)で「未解決の問題」として残しておいた、スキル間のAttention競合問題に正面から取り組んだ話をしていきます。作ったスキルが10個、20個と増えてきたとき、それぞれがちゃんと正しく発火しているのか。あるスキルのdescriptionを改善したら別のスキルの精度が下がっていないか。そんなポートフォリオレベルの監査を自動でやってくれるスキル、skill-auditorを作りました。
+今日は[前回の記事](https://nyosegawa.github.io/posts/skill-creator-and-orchestration-skill/)で「未解決の問題」として残しておいた、スキル間のAttention競合問題に正面から取り組んだ話をしていきます。作ったスキルが10個、20個と増えてきたとき、それぞれがちゃんと正しく発火しているのか。あるスキルのdescriptionを改善したら別のスキルの精度が下がっていないか。そんなポートフォリオレベルの監査を自動でやってくれるスキル、[skill-auditor](https://github.com/nyosegawa/skills/blob/main/skills/skill-auditor/SKILL.md)を作りました。
 
 <!--more-->
 
