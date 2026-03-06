@@ -243,22 +243,29 @@ pub(crate) fn with_config_overrides(mut model: ModelInfo, config: &Config) -> Mo
 
 まずは価格から。コスト構造の違いは選択に直結するので大事です。
 
-| モデル | 入力 ($/M tokens) | キャッシュ入力 ($/M tokens) | 出力 ($/M tokens) | ソース |
+| モデル | 入力 ($/M tokens) | キャッシュ読取 ($/M tokens) | 出力 ($/M tokens) | ソース |
 |---|---|---|---|---|
-| GPT-5.4 (<272K) | $2.50 | $0.25 | $15.00 | [OpenAI](https://openai.com/api/pricing/) |
+| GPT-5.4 (≤272K) | $2.50 | $0.25 | $15.00 | [OpenAI](https://openai.com/api/pricing/) |
 | GPT-5.4 (>272K) | $5.00 | $0.50 | $22.50 | [OpenAI](https://openai.com/api/pricing/) |
-| GPT-5.4 Pro (<272K) | $30.00 | - | $180.00 | [OpenAI](https://openai.com/api/pricing/) |
+| GPT-5.4 Pro (≤272K) | $30.00 | - | $180.00 | [OpenAI](https://openai.com/api/pricing/) |
 | GPT-5.4 Pro (>272K) | $60.00 | - | $270.00 | [OpenAI](https://openai.com/api/pricing/) |
 | GPT-5.2 | $1.75 | $0.175 | $14.00 | [OpenAI](https://openai.com/api/pricing/) |
-| Claude Sonnet 4.6 | $3.00 | - | $15.00 | [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) |
-| Claude Opus 4.6 | $5.00 | - | $25.00 | [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) |
-| Gemini 2.5 Pro | $1.25 | - | $10.00 | [Google](https://ai.google.dev/gemini-api/docs/pricing) |
+| Claude Sonnet 4.6 (≤200K) | $3.00 | $0.30 | $15.00 | [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Claude Sonnet 4.6 (>200K) | $6.00 | $0.60 | $22.50 | [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Claude Opus 4.6 (≤200K) | $5.00 | $0.50 | $25.00 | [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Claude Opus 4.6 (>200K) | $10.00 | $1.00 | $37.50 | [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Gemini 3.1 Pro (≤200K) | $2.00 | $0.20 | $12.00 | [Google](https://ai.google.dev/gemini-api/docs/pricing) |
+| Gemini 3.1 Pro (>200K) | $4.00 | $0.40 | $18.00 | [Google](https://ai.google.dev/gemini-api/docs/pricing) |
+| Gemini 2.5 Pro (≤200K) | $1.25 | $0.125 | $10.00 | [Google](https://ai.google.dev/gemini-api/docs/pricing) |
+| Gemini 2.5 Pro (>200K) | $2.50 | $0.25 | $15.00 | [Google](https://ai.google.dev/gemini-api/docs/pricing) |
+
+キャッシュ読取はOpenAIの「Cached input」、Anthropicの「Cache Hits & Refreshes」、Googleの「Context caching」に対応し、いずれもベース入力単価の0.1倍です。
 
 GPT-5.4はGPT-5.2より入力が43%高くなっています（$1.75→$2.50）。ただしOpenAIはGPT-5.4のトークン効率がGPT-5.2より大幅に改善されていると主張しており、同じタスクに必要な総トークン数が減るため実質コストは下がるケースもあるとのことです。
 
 Claude Sonnet 4.6と比較すると入力はGPT-5.4が安く（$2.50 vs $3.00）、出力は同額（$15.00）です。Gemini 2.5 Proは入出力ともに最安ですが、各モデルの得意分野が異なるのでコストだけでは判断できません。
 
-なおAnthropic・Googleとも200K超のコンテキスト利用時は入力2倍・出力1.5倍程度の長コンテキスト課金が設定されています。OpenAIのGPT-5.4も同様に272K超ではセッション全体の入力が2倍・出力が1.5倍になるため、1Mコンテキストを常用すると通常の2倍近いコストがかかります。
+なお3社とも長コンテキスト利用時は入力2倍・出力1.5倍の課金が設定されています（OpenAI: 272K超、Anthropic・Google: 200K超）。1Mコンテキストを常用すると通常の2倍近いコストがかかります。
 
 ### ベンチマーク横断比較
 
