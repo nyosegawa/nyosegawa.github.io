@@ -302,7 +302,9 @@ pub(crate) fn with_config_overrides(mut model: ModelInfo, config: &Config) -> Mo
 - 長時間のデバッグセッションで会話履歴を圧縮させたくない
 - 複数ファイルにまたがるアーキテクチャレビュー
 
-逆に通常のコーディング作業であればデフォルトの272Kで十分なケースが多いはずです。[Latest Model Guide](https://developers.openai.com/api/docs/guides/latest-model)によると、GPT-5.4は「first mainline model trained for context compaction in extended agent trajectories」（長時間エージェント軌跡におけるコンテキスト圧縮のために訓練された最初のメインラインモデル）です。圧縮からの復元が訓練レベルで最適化されているため、auto-compactに任せても従来モデルより文脈が失われにくくなっています。1Mに拡張するのは、実際にauto-compactで文脈が失われて困った場合に検討すればいいでしょう。
+逆に通常のコーディング作業であればデフォルトの272Kで十分なケースが多いはずです。[Latest Model Guide](https://developers.openai.com/api/docs/guides/latest-model)によると、GPT-5.4は「first mainline model trained for context compaction in extended agent trajectories」（長時間エージェント軌跡におけるコンテキスト圧縮のために訓練された最初のメインラインモデル）です。ここでいうcompactionとは、会話が長くなったときにそれまでのコンテキストを要約・圧縮して、少ないトークンで先の状態と推論を引き継ぐ仕組みです（[Compaction Guide](https://developers.openai.com/api/docs/guides/compaction/)）。Codexのようなコーディングエージェント、というよりツール呼び出しを繰り返す汎用AIエージェント全般を意識した設計で、長時間のエージェントセッションで定期的にcompactionを行う運用が前提になっています。
+
+GPT-5.4はこのcompactionからの復元が訓練レベルで最適化されているため、auto-compactに任せても従来モデルより文脈が失われにくくなっています。1Mに拡張するのは、実際にauto-compactで文脈が失われて困った場合に検討すればいいでしょう。
 
 ## 他モデルとの比較
 
