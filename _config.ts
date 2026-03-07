@@ -58,6 +58,39 @@ site.process([".html"], (pages) => {
         link.setAttribute("rel", "noopener noreferrer");
       }
     });
+
+    const head = doc.querySelector("head");
+    if (!head) continue;
+
+    // Change og:type to "article" for blog posts
+    const isPost = page.data.url?.startsWith("/posts/");
+    if (isPost) {
+      const ogType = head.querySelector("meta[property='og:type']");
+      if (ogType) {
+        ogType.setAttribute("content", "article");
+      }
+    }
+
+    // Add og:image dimensions and twitter:image
+    const ogImage = head.querySelector("meta[property='og:image']");
+    if (ogImage) {
+      const imageUrl = ogImage.getAttribute("content");
+
+      const addMeta = (attr: string, key: string, value: string) => {
+        const meta = doc.createElement("meta");
+        meta.setAttribute(attr, key);
+        meta.setAttribute("content", value);
+        ogImage.after(meta);
+      };
+
+      addMeta("property", "og:image:width", "1200");
+      addMeta("property", "og:image:height", "630");
+      addMeta("property", "og:image:type", "image/png");
+
+      if (imageUrl && !head.querySelector("meta[name='twitter:image']")) {
+        addMeta("name", "twitter:image", imageUrl);
+      }
+    }
   }
 });
 

@@ -88,45 +88,51 @@ def wrap_title(title: str, font: ImageFont.FreeTypeFont, max_width: int) -> list
 
 
 def generate_card(title: str, tags: list[str], output_path: Path):
-    """Generate a single OG card image with Soft Blue design."""
-    # Load fonts
-    font_title = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-ExtraBold.ttf"), 50)
-    font_tag = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 18)
-    font_author = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 22)
-    font_blog = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Regular.ttf"), 20)
+    """Generate a single OG card image with Soft Blue design.
+
+    Renders at 2x resolution then downscales for smooth anti-aliasing.
+    """
+    S = 2  # supersampling scale
+    W, H = WIDTH * S, HEIGHT * S
+
+    # Load fonts (at 2x size)
+    font_title = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-ExtraBold.ttf"), 54 * S)
+    font_tag = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 18 * S)
+    font_author = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 30 * S)
+    font_blog = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Regular.ttf"), 28 * S)
 
     # --- Background: vertical blue gradient ---
-    img = Image.new("RGB", (WIDTH, HEIGHT), WHITE)
-    for y in range(HEIGHT):
-        t = y / HEIGHT
+    img = Image.new("RGB", (W, H), WHITE)
+    for y in range(H):
+        t = y / H
         r = int(BG_TOP[0] + (BG_BOTTOM[0] - BG_TOP[0]) * t)
         g = int(BG_TOP[1] + (BG_BOTTOM[1] - BG_TOP[1]) * t)
         b = int(BG_TOP[2] + (BG_BOTTOM[2] - BG_TOP[2]) * t)
-        for x in range(WIDTH):
+        for x in range(W):
             img.putpixel((x, y), (r, g, b))
 
     # --- Decorative circles (subtle background) ---
-    overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     odraw = ImageDraw.Draw(overlay)
-    odraw.ellipse([-80, -80, 200, 200], fill=CIRCLE_DECO)
-    odraw.ellipse([WIDTH - 250, HEIGHT - 200, WIDTH + 50, HEIGHT + 50], fill=CIRCLE_DECO)
+    odraw.ellipse([-80 * S, -80 * S, 200 * S, 200 * S], fill=CIRCLE_DECO)
+    odraw.ellipse([W - 250 * S, H - 200 * S, W + 50 * S, H + 50 * S], fill=CIRCLE_DECO)
     img_rgba = img.convert("RGBA")
     img_rgba = Image.alpha_composite(img_rgba, overlay)
     img = img_rgba.convert("RGB")
     draw = ImageDraw.Draw(img)
 
     # --- White card with shadow ---
-    card_mx, card_my = 56, 36
+    card_mx, card_my = 56 * S, 36 * S
     cx, cy = card_mx, card_my
-    cw = WIDTH - card_mx * 2
-    ch = HEIGHT - card_my * 2
-    radius = 20
+    cw = W - card_mx * 2
+    ch = H - card_my * 2
+    radius = 20 * S
 
     # Shadow
-    shadow = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     sdraw = ImageDraw.Draw(shadow)
     sdraw.rounded_rectangle(
-        [cx + 2, cy + 4, cx + cw + 2, cy + ch + 4],
+        [cx + 2 * S, cy + 4 * S, cx + cw + 2 * S, cy + ch + 4 * S],
         radius=radius, fill=(0, 0, 0, 12),
     )
     img_rgba = img.convert("RGBA")
@@ -137,39 +143,45 @@ def generate_card(title: str, tags: list[str], output_path: Path):
     # Card body
     draw.rounded_rectangle([cx, cy, cx + cw, cy + ch], radius=radius, fill=WHITE)
 
-    # --- Blue accent dot (top-left of card) ---
-    dot_r = 8
+    # --- Blue accent dot (top-right of card) ---
+    dot_r = 8 * S
     draw.ellipse(
-        [cx + 28, cy + 28, cx + 28 + dot_r * 2, cy + 28 + dot_r * 2],
+        [cx + cw - 48 * S, cy + 28 * S, cx + cw - 48 * S + dot_r * 2, cy + 28 * S + dot_r * 2],
         fill=ACCENT_BLUE,
     )
 
     # --- Author avatar + name (top-left inside card) ---
-    author_x = cx + 60
-    author_y = cy + 32
+    avatar_size = 120 * S
+    author_x = cx + 40 * S
+    author_y = cy + 28 * S
     if ICON_PATH.exists():
         try:
             avatar = Image.open(ICON_PATH).convert("RGBA")
-            avatar = avatar.resize((40, 40), Image.LANCZOS)
-            mask = Image.new("L", (40, 40), 0)
-            ImageDraw.Draw(mask).ellipse([0, 0, 40, 40], fill=255)
+            avatar = avatar.resize((avatar_size, avatar_size), Image.LANCZOS)
+            mask = Image.new("L", (avatar_size, avatar_size), 0)
+            ImageDraw.Draw(mask).ellipse([0, 0, avatar_size, avatar_size], fill=255)
             img.paste(avatar.convert("RGB"), (author_x, author_y), mask)
             draw = ImageDraw.Draw(img)
         except Exception:
             pass
-    draw.text((author_x + 52, author_y + 8), AUTHOR, font=font_author, fill=TEXT_AUTHOR)
 
-    # --- Blog name (top-right inside card) ---
+    # Author name + blog name (right of avatar, stacked vertically)
+    text_x = author_x + avatar_size + 20 * S
+    author_bbox = font_author.getbbox(AUTHOR)
+    author_h = author_bbox[3] - author_bbox[1]
     blog_bbox = font_blog.getbbox(BLOG_NAME)
-    blog_w = blog_bbox[2] - blog_bbox[0]
-    draw.text((cx + cw - 40 - blog_w, author_y + 10), BLOG_NAME, font=font_blog, fill=TEXT_BLOG)
+    blog_h = blog_bbox[3] - blog_bbox[1]
+    total_text_h = author_h + 8 * S + blog_h
+    text_top_y = author_y + (avatar_size - total_text_h) // 2
+    draw.text((text_x, text_top_y), AUTHOR, font=font_author, fill=TEXT_AUTHOR)
+    draw.text((text_x, text_top_y + author_h + 8 * S), BLOG_NAME, font=font_blog, fill=TEXT_BLOG)
 
-    # --- Title (upper-center inside card) ---
-    title_x = cx + 60
-    title_max_w = cw - 120
+    # --- Title (below avatar area) ---
+    title_x = cx + 60 * S
+    title_max_w = cw - 120 * S
     lines = wrap_title(title, font_title, title_max_w)
-    line_height = 70
-    title_start_y = cy + 100
+    line_height = 74 * S
+    title_start_y = author_y + avatar_size + 24 * S
 
     for i, line in enumerate(lines):
         draw.text(
@@ -179,21 +191,29 @@ def generate_card(title: str, tags: list[str], output_path: Path):
 
     # --- Tags (below title) ---
     total_title_h = len(lines) * line_height
-    tag_y = title_start_y + total_title_h + 20
+    tag_y = title_start_y + total_title_h + 20 * S
     tag_x = title_x
     for tag_text in tags[:5]:
         bbox = font_tag.getbbox(tag_text)
-        tw = bbox[2] - bbox[0]
-        th = bbox[3] - bbox[1]
-        pad_x, pad_y = 14, 7
-        if tag_x + tw + pad_x * 2 > cx + cw - 40:
+        t_left, t_top, t_right, t_bottom = bbox
+        tw = t_right - t_left
+        th = t_bottom - t_top
+        pad_x, pad_y = 14 * S, 8 * S
+        box_w = tw + pad_x * 2
+        box_h = th + pad_y * 2
+        if tag_x + box_w > cx + cw - 40 * S:
             break
         draw.rounded_rectangle(
-            [tag_x, tag_y, tag_x + tw + pad_x * 2, tag_y + th + pad_y * 2],
-            radius=14, fill=TAG_BG,
+            [tag_x, tag_y, tag_x + box_w, tag_y + box_h],
+            radius=14 * S, fill=TAG_BG,
         )
-        draw.text((tag_x + pad_x, tag_y + pad_y - 2), tag_text, font=font_tag, fill=TAG_FG)
-        tag_x += tw + pad_x * 2 + 10
+        # Center text vertically within the pill
+        text_y = tag_y + pad_y - t_top
+        draw.text((tag_x + pad_x - t_left, text_y), tag_text, font=font_tag, fill=TAG_FG)
+        tag_x += box_w + 10 * S
+
+    # Downscale to final size for smooth anti-aliasing
+    img = img.resize((WIDTH, HEIGHT), Image.LANCZOS)
 
     # Save
     output_path.parent.mkdir(parents=True, exist_ok=True)
