@@ -700,7 +700,7 @@ metadataTest:
 
 #### モデル評価（ベンチマーク）
 
-[lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)（EleutherAI、v0.4.11、11.6k stars、PyPI日次DL 15,000〜18,000）はLLMの学術ベンチマーク評価のデファクトスタンダードで、HuggingFace Open LLM Leaderboardのバックエンドとして採用され、NVIDIAもNGCコンテナやNeMo Microservicesに統合しています。[v0.4.10](https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.10)（2026年1月）でCLIがサブコマンド化（`lm-eval run`、`lm-eval ls tasks`、`lm-eval validate`）されYAML設定ファイルに対応しました。同バージョンで軽量コア化の破壊的変更が入り、`pip install lm_eval`がバックエンドを同梱しなくなり、`lm_eval[hf]`/`lm_eval[vllm]`/`lm_eval[api]`等の明示的インストールが必要になっています。
+[lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)（EleutherAI）はLLMの学術ベンチマーク評価のデファクトスタンダードで、HuggingFace Open LLM Leaderboardのバックエンドとして採用され、NVIDIAもNGCコンテナやNeMo Microservicesに統合しています。[v0.4.10](https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.10)（2026年1月）でCLIがサブコマンド化（`lm-eval run`、`lm-eval ls tasks`、`lm-eval validate`）されYAML設定ファイルに対応しました。同バージョンで軽量コア化の破壊的変更が入り、`pip install lm_eval`がバックエンドを同梱しなくなり、`lm_eval[hf]`/`lm_eval[vllm]`/`lm_eval[api]`等の明示的インストールが必要になっています。
 
 [LightEval](https://github.com/huggingface/lighteval)（Hugging Face、2.3k stars）はHugging Faceが開発する軽量な評価フレームワークで、1,000以上のタスクをサポートしTGIやInference Endpointsとのネイティブ統合に優れます。元々lm-evaluation-harnessの影響を受けて開発されたもので、HFエコシステム内での評価ワークフローに適しています。ただし、Open LLM Leaderboard v2自体は引き続きlm-evaluation-harness（HFフォーク版）をバックエンドとして使用しています。
 
