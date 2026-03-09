@@ -700,9 +700,11 @@ metadataTest:
 
 #### モデル評価（ベンチマーク）
 
-[lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)（EleutherAI、v0.4.11、11.6k stars）はLLMの学術ベンチマーク評価を標準化するフレームワークで、HuggingFace Open LLM Leaderboardを支え5,000以上の論文で引用されています。[v0.4.10](https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.10)（2026年1月）でCLIがサブコマンド化（`lm-eval run`、`lm-eval ls tasks`、`lm-eval validate`）されYAML設定ファイルに対応しました。同バージョンで`pip install lm_eval`がバックエンドを同梱しなくなり、`lm_eval[hf]`/`lm_eval[vllm]`/`lm_eval[api]`等の明示的インストールが必要になっています。
+[lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)（EleutherAI、v0.4.11、11.6k stars、PyPI日次DL 15,000〜18,000）はLLMの学術ベンチマーク評価のデファクトスタンダードで、HuggingFace Open LLM Leaderboardのバックエンドとして採用され、NVIDIAもNGCコンテナやNeMo Microservicesに統合しています。[v0.4.10](https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.10)（2026年1月）でCLIがサブコマンド化（`lm-eval run`、`lm-eval ls tasks`、`lm-eval validate`）されYAML設定ファイルに対応しました。同バージョンで軽量コア化の破壊的変更が入り、`pip install lm_eval`がバックエンドを同梱しなくなり、`lm_eval[hf]`/`lm_eval[vllm]`/`lm_eval[api]`等の明示的インストールが必要になっています。
 
-ただし、lm-evaluation-harnessは**学術ベンチマーク用**であり、アプリケーションレベルの評価やCI/CD統合には別のツールが適しています。
+[LightEval](https://github.com/huggingface/lighteval)（Hugging Face、2.3k stars）はHugging Faceが開発する軽量な評価フレームワークで、1,000以上のタスクをサポートしTGIやInference Endpointsとのネイティブ統合に優れます。元々lm-evaluation-harnessの影響を受けて開発されたもので、HFエコシステム内での評価ワークフローに適しています。ただし、Open LLM Leaderboard v2自体は引き続きlm-evaluation-harness（HFフォーク版）をバックエンドとして使用しています。
+
+両者は競合というより補完関係にあり、lm-evaluation-harnessが学術的再現性と標準化に強く、LightEvalがHFエコシステムとの統合に強いという棲み分けです。アプリケーションレベルの評価やCI/CD統合にはいずれも不向きで、別のツールが適しています。
 
 #### アプリケーション品質評価（LLM）
 
@@ -737,7 +739,7 @@ Anthropicは[Constitutional Classifiers](https://www.anthropic.com/research/cons
 | レイヤー | テストツール | 自動化パターン |
 |----------|-------------|----------------|
 | データ品質 | GX Core/Cloud, Soda Core, Elementary, dbt Tests | パイプライン実行時アサーション、Data Contracts |
-| モデル性能（ベンチマーク） | lm-evaluation-harness, HELM, Inspect AI | ベースライン比較、YAML宣言的設定 |
+| モデル性能（ベンチマーク） | lm-evaluation-harness, LightEval, HELM, Inspect AI | ベースライン比較、YAML宣言的設定 |
 | アプリケーション品質（LLM） | DeepEval, promptfoo, RAGAS | pytest/CI統合、LLM-as-Judge |
 | エージェント評価 | Maxim AI, LangSmith, Arize Phoenix, Langfuse | トレーシング+オフライン/オンラインeval |
 | 安全性・ガードレール | PyRIT, promptfoo, Guardrails AI, NeMo Guardrails | CI/CDゲーティング、Constitutional Classifiers |
@@ -759,7 +761,7 @@ Anthropicは[Constitutional Classifiers](https://www.anthropic.com/research/cons
 | API | HTTPレスポンス (Hurl) |
 | Desktop | アクセシビリティツリー (Terminator/circuit-mcp/macos-ui-automation-mcp) |
 | Infra | Plan出力/スキーマ (terraform test/conftest) |
-| AI/ML | 評価メトリクス (lm-eval-harness/GE) |
+| AI/ML | 評価メトリクス (lm-eval-harness/LightEval/GE) |
 
 共通する原則は検証結果をフィードバックとしてエージェントに返し、自己修正のループを閉じることです。
 
@@ -1138,6 +1140,7 @@ E2Eテスト: テスト生成にはClaude Code(フィードバックループで
 
 #### モデル評価・ベンチマーク
 - [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) (EleutherAI)
+- [LightEval](https://github.com/huggingface/lighteval) (Hugging Face)
 - [HELM](https://github.com/stanford-crfm/helm) (Stanford CRFM)
 - [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai) (UK AISI)
 
