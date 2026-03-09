@@ -364,7 +364,7 @@ ERROR: [何が間違っているか]
 
 [Anthropicの公式ドキュメント](https://code.claude.com/docs/en/memory)は「200行以下」を明記していますが、これは上限であって目標ではありません。指示が増えるほど遵守率は下がります。[IFScale](https://arxiv.org/abs/2507.11538)の研究は150〜200指示の時点でprimacy bias(先頭の指示への偏り)が顕著になり性能が劣化し始めることを示しました。「150まで大丈夫」ではなく「150から壊れ始める」と読むべきです。
 
-Claude Codeのシステムプロンプト自体が[約50の指示を含む](https://www.humanlayer.dev/blog/writing-a-good-claude-md)ので、ユーザーのAGENTS.mdが100行あればエージェントは計150の指示を抱えます。ここに長大なコンテキストファイルが加われば重要な指示が埋もれます。
+Claude Codeのシステムプロンプト自体が[約50の指示を含む](https://www.humanlayer.dev/blog/writing-a-good-claude-md)ので、ユーザーのCLAUDE.md(Codexの場合はAGENTS.md)が100行あればエージェントは計150の指示を抱えます。ここに長大なコンテキストファイルが加われば重要な指示が埋もれます。
 
 実践的な設計:
 
@@ -923,16 +923,15 @@ E2Eテスト: テスト生成にはClaude Code(フィードバックループで
 2026年時点で多くのプロフェッショナルは[Claude Codeで計画・設計 → Codexで並列実行 → Claude Codeでレビュー・改善](https://northflank.com/blog/claude-code-vs-openai-codex)のハイブリッド構成を採用しています。
 
 共通ハーネスレイヤー(両プラットフォームで共有):
-- [AGENTS.md(AAIF標準、60,000以上のリポジトリが採用)](https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation)
-- Skills(SKILL.md、互換フォーマットに収束中)
+- [AGENTS.md(AAIF標準、Codex・Cursor・Devin・Gemini CLI・GitHub Copilot等の主要Coding Agentが読み込む共通フォーマット)](https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation)。Claude CodeではCLAUDE.mdが対応するファイルで、AGENTS.mdはネイティブには読み込まれません。両方を管理する場合はCLAUDE.md内で[`@AGENTS.md`と参照してインクルード](https://code.claude.com/docs/en/claude-code-on-the-web)します
+- [Skills(SKILL.md、Anthropicがオープン標準としてリリースしOpenAIも同一フォーマットを採用)](https://code.claude.com/docs/en/skills)
 - MCP設定
 - ADR、リンター/フォーマッター設定、テストスイート
 
 プラットフォーム固有レイヤー:
-- CLAUDE.md: Claude Code固有のHooks設定参照、Plan Mode指示
-- `.claude/settings.json`: ライフサイクルフック定義
+- CLAUDE.md + `.claude/settings.json`: Claude Code固有のHooks設定、Plan Mode指示、ライフサイクルフック定義
 - Codex Automations設定: 定期タスクスケジュール
-- `~/.codex/AGENTS.override.md`: Codexグローバル設定
+- `~/.codex/AGENTS.override.md`: リリースフリーズやインシデント対応時にAGENTS.mdを一時的にオーバーライドする高優先度設定
 
 ### 意思決定フレームワーク
 
@@ -948,7 +947,7 @@ E2Eテスト: テスト生成にはClaude Code(フィードバックループで
 
 1. プロンプトだけに頼る: エージェントに「テストを書いてからコミットしてね」と書くだけでは不十分です。プリコミットフックでテストの実行を強制しましょう。お願いではなく仕組みで解決します
 2. リポジトリに説明文書を蓄積する: READMEに「このサービスはXとYに依存している」と書くより、依存関係を型定義やスキーマで表現し構造テストで検証する方が腐敗しません
-3. AGENTS.mdを巨大にする: WPBoilerplate(WordPressプラグインボイラープレート)の[AGENTS.mdは1,000行超](https://addyosmani.com/blog/agents-md/)。最初の質問が投げられる前に大量のコンテキストを消費します。50行以下を目指しましょう
+3. AGENTS.md/CLAUDE.mdを巨大にする: WPBoilerplate(WordPressプラグインボイラープレート)の[AGENTS.mdは1,000行超](https://addyosmani.com/blog/agents-md/)。最初の質問が投げられる前に大量のコンテキストを消費します。50行以下を目指しましょう
 4. エージェント専用のインフラを構築する: [Stripeの教訓](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents)が最も一般化可能です。「エージェント専用インフラを構築するな。優れた開発者インフラを構築せよ。エージェントは自動的にその恩恵を受ける」
 5. ハーネスなしでスケールしようとする: ハーネスなしでエージェントの数を増やすと、[複利的なレバレッジではなく複利的な認知的負債が生まれます](https://thenewstack.io/vibe-coding-agentic-engineering/)。まず1つのエージェントでハーネスを磨き、それからスケールしましょう
 
