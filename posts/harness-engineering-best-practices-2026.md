@@ -686,26 +686,62 @@ metadataTest:
 
 ### AI/MLパイプラインE2Eテスト
 
-エージェントがAI/MLパイプラインを構築・変更する場合、コードの正しさだけでなくデータ品質・モデル性能・パイプライン全体の整合性を検証する必要があります。
+エージェントがAI/MLパイプラインを構築・変更する場合、コードの正しさだけでなくデータ品質・モデル性能・パイプライン全体の整合性を検証する必要があります。テストは**データ品質**、**モデル評価（ベンチマーク）**、**アプリケーション品質（LLM）**、**エージェント評価**、**安全性・ガードレール**、**可観測性・ドリフト検出**の6レイヤーに分かれます。
 
 #### データパイプラインテスト
 
-[Great Expectations](https://greatexpectations.io/)はPythonベースのデータ品質検証フレームワークです。カラム単位の期待値(null不可、範囲、ユニーク性等)を定義しパイプライン実行時にアサーションします。
+[GX（Great Expectations）](https://greatexpectations.io/)はPythonベースのデータ品質検証フレームワークです（v1.14.0、11.2k stars）。[GX Core 1.0](https://greatexpectations.io/blog/introducing-gx-core-1-0/)（2024年8月）でアーキテクチャが根本的に刷新され、Data Source / Data Asset / Batch Definitionの3層構造に再設計されました。[GX Cloud](https://greatexpectations.io/gx-cloud/)（マネージドSaaS）ではExpectAI（AI支援によるExpectation自動生成）やアノマリ検出が利用可能です。
 
-[dbt Tests + dbt-expectations](https://airbyte.com/blog/testing-with-dbt-expectations)はSQLベースのデータ変換テストです。2026年のベストプラクティスとしてテーブルあたり3テスト、カラムあたり2テストが推奨されています。
+[dbt Tests](https://docs.getdbt.com/docs/build/data-tests)はSQLベースのデータ変換テストです（dbt Core v1.11.7）。dbt 1.8+では[ユニットテスト](https://docs.getdbt.com/docs/build/unit-tests)が一級機能として追加され、`tests:`キーは`data_tests:`にリネームされました。dbtのテストベストプラクティスは「全モデルの主キーに`unique` + `not_null`」「ソースデータの前提をテスト」「[リスクベースのアプローチ](https://www.datafold.com/blog/7-dbt-testing-best-practices/)」であり、一律の数値目標ではありません。[dbt-expectations](https://hub.getdbt.com/metaplane/dbt_expectations/latest/)（現在は[Metaplane](https://github.com/metaplane/dbt-expectations)がメンテナンス、v0.10.10）はGXスタイルのExpectationをdbtマクロとして提供します。
 
-#### モデル評価
+なお、dbt Labsは2025年10月に[Fivetranとの合併を発表](https://www.getdbt.com/blog/dbt-labs-and-fivetran-sign-definitive-agreement-to-merge)しています（規制承認待ち）。FivetranはSQLMeshの開発元である[Tobiko Dataも2025年9月に買収](https://www.fivetran.com/press/fivetran-acquires-tobiko-data-to-power-the-next-generation-of-advanced-ai-ready-data-transformation)しており、主要なデータ変換OSSが同一傘下に入る動きが進んでいます。
 
-[lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)(EleutherAI)はLLMの評価を標準化するフレームワークです。CLIリファクタリング(サブコマンド化、YAML設定サポート)によりエージェントからの呼び出しが容易になっています。
+データ品質の競合としては、[Soda Core](https://github.com/sodadata/soda-core)（v4.1.1、YAML/SodaCL言語ベース、「Data Contracts engine」にピボット）や[Elementary](https://github.com/elementary-data/elementary)（dbtネイティブのデータ可観測性）があります。
 
-2026年のエンタープライズ標準として[継続的評価(Continuous Evaluation)](https://www.confident-ai.com/blog/llm-testing-in-2024-top-methods-and-strategies)が確立されつつあります。リアルタイムベンチマーク・自動ゲーティングがCI/CDパイプラインに統合され、ドリフト検出を数時間以内に行うパイプラインが構築されています。
+#### モデル評価（ベンチマーク）
+
+[lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)（EleutherAI、v0.4.11、11.6k stars）はLLMの学術ベンチマーク評価を標準化するフレームワークで、HuggingFace Open LLM Leaderboardを支え5,000以上の論文で引用されています。[v0.4.10](https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.10)（2026年1月）でCLIがサブコマンド化（`lm-eval run`、`lm-eval ls tasks`、`lm-eval validate`）されYAML設定ファイルに対応しました。同バージョンで`pip install lm_eval`がバックエンドを同梱しなくなり、`lm_eval[hf]`/`lm_eval[vllm]`/`lm_eval[api]`等の明示的インストールが必要になっています。
+
+ただし、lm-evaluation-harnessは**学術ベンチマーク用**であり、アプリケーションレベルの評価やCI/CD統合には別のツールが適しています。
+
+#### アプリケーション品質評価（LLM）
+
+LLMアプリケーションの品質評価ツールは2025〜2026年にかけて急速に成熟しました。
+
+[DeepEval](https://github.com/confident-ai/deepeval)（Confident AI、14.0k stars）はpytest互換のLLM評価フレームワークで、60以上のメトリクス（RAG・エージェント・会話・安全性）を提供します。[CI/CDとの統合](https://deepeval.com/docs/evaluation-unit-testing-in-ci-cd)がネイティブにサポートされており、`deepeval test run`コマンドでGitHub Actions等から直接実行可能です。
+
+[promptfoo](https://github.com/promptfoo/promptfoo)（10.9k stars）はYAML宣言的設定によるプロンプトテスト・レッドチーミング・脆弱性スキャンを提供し、[CI/CD統合](https://www.promptfoo.dev/docs/integrations/ci-cd/)に優れます。50以上の脆弱性プラグインによる自動レッドチーミングが特徴です。
+
+[RAGAS](https://docs.ragas.io/)はRAG特化の評価フレームワークで、Context Precision/Recall、Faithfulness、Answer Relevancyなどのメトリクスを提供します。2026年現在ではエージェントワークフロー・ツール使用・SQLの評価にも対応しています。
+
+#### 継続的評価（Continuous Evaluation）
+
+2026年のエンタープライズ標準として[継続的評価](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)が確立されつつあります。プレデプロイでは閾値ベースの品質ゲート（例：faithfulness >= 0.85、ハルシネーション率 <= 5%）をCI/CDに組み込み、ポストデプロイではドリフト検出・本番トラフィックの継続スコアリングを行うパターンが定着しています。LLM-as-Judgeが自動評価の標準手法となり、[LangChainの調査](https://www.langchain.com/state-of-agent-engineering)では53.3%の組織がLLM-as-Judgeを採用、89%がエージェントの可観測性を実装している一方、オフライン評価の実施は52.4%にとどまっています。
+
+#### 安全性テスト・ガードレール
+
+LLMの安全性テストには専用ツールが不可欠です。
+
+[Microsoft PyRIT](https://github.com/Azure/PyRIT)（3.4k stars）はエンタープライズ向けレッドチーミングツールで、[Azure AI Foundry](https://devblogs.microsoft.com/foundry/ai-red-teaming-agent-preview/)にAI Red Teaming Agentとして統合されています。20以上の攻撃戦略とAttack Success Rate（ASR）メトリクスを提供します。
+
+[Guardrails AI](https://github.com/guardrails-ai/guardrails)はLLM出力バリデーションフレームワークで、Hubから事前構築済みバリデータを組み合わせてInput/Output Guardsを構成します。[Guardrails Index](https://guardrailsai.com/)（2025年2月）は24のガードレールを6カテゴリで比較する初のベンチマークです。
+
+[NVIDIA NeMo Guardrails](https://github.com/NVIDIA/NeMo-Guardrails)はプログラマブルなガードレールツールキットで、入力・対話・検索のレイルをサポートします。
+
+Anthropicは[Constitutional Classifiers](https://www.anthropic.com/research/constitutional-classifiers)を開発し、3,000時間以上の専門家レッドチーミングでユニバーサル脱獄が見つからなかった実績があります。本番環境での拒否率増加はわずか0.38%、推論オーバーヘッドは23.7%です。
+
+規制面では**EU AI Act**のハイリスクAI完全義務化が[2026年8月2日に施行](https://sombrainc.com/blog/ai-regulations-2026-eu-ai-act)予定であり、品質管理・リスク管理・適合性評価における敵対的テストが義務化されます。[NIST AI RMF](https://www.nist.gov/artificial-intelligence/ai-risk-management-framework)のTEVV（Testing, Evaluation, Verification, Validation）も構造的評価アプローチとして確立しています。
+
+#### まとめ
 
 | レイヤー | テストツール | 自動化パターン |
 |----------|-------------|----------------|
-| データ品質 | Great Expectations / dbt Tests | パイプライン実行時にアサーション自動実行 |
-| モデル性能 | lm-evaluation-harness / 独自eval | ベースラインとの比較、閾値ベースのゲーティング |
-| パイプライン整合性 | 統合テスト(Testcontainers等) | ステージ間のハンドオフ検証 |
-| 安全性 | レッドチーミング + 自動化ガードレール | CI/CDに組み込みデプロイ前にゲート |
+| データ品質 | GX Core/Cloud, Soda Core, Elementary, dbt Tests | パイプライン実行時アサーション、Data Contracts |
+| モデル性能（ベンチマーク） | lm-evaluation-harness, HELM, Inspect AI | ベースライン比較、YAML宣言的設定 |
+| アプリケーション品質（LLM） | DeepEval, promptfoo, RAGAS | pytest/CI統合、LLM-as-Judge |
+| エージェント評価 | Maxim AI, LangSmith, Arize Phoenix, Langfuse | トレーシング+オフライン/オンラインeval |
+| 安全性・ガードレール | PyRIT, promptfoo, Guardrails AI, NeMo Guardrails | CI/CDゲーティング、Constitutional Classifiers |
+| 可観測性・ドリフト検出 | Arize, WhyLabs, Evidently AI, Langfuse | リアルタイム監視、自動アラート |
 
 ### ユニバーサルE2E原則のまとめ
 
@@ -1093,10 +1129,36 @@ E2Eテスト: テスト生成にはClaude Code(フィードバックループで
 - [kubeconform](https://github.com/yannh/kubeconform)
 
 ### AI/ML
-- [Great Expectations](https://greatexpectations.io/)
-- [dbt-expectations](https://airbyte.com/blog/testing-with-dbt-expectations) (Airbyte)
+#### データ品質
+- [GX Core / GX Cloud](https://greatexpectations.io/) (Great Expectations)
+- [Soda Core](https://github.com/sodadata/soda-core) (Soda)
+- [Elementary](https://github.com/elementary-data/elementary) (Elementary Data)
+- [dbt Tests / Unit Tests](https://docs.getdbt.com/docs/build/data-tests) (dbt Labs)
+- [dbt-expectations](https://hub.getdbt.com/metaplane/dbt_expectations/latest/) (Metaplane)
+
+#### モデル評価・ベンチマーク
 - [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) (EleutherAI)
-- [LLM Testing in 2026](https://www.confident-ai.com/blog/llm-testing-in-2024-top-methods-and-strategies) (Confident AI)
+- [HELM](https://github.com/stanford-crfm/helm) (Stanford CRFM)
+- [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai) (UK AISI)
+
+#### LLM評価・CI/CD統合
+- [DeepEval](https://github.com/confident-ai/deepeval) (Confident AI)
+- [promptfoo](https://github.com/promptfoo/promptfoo)
+- [RAGAS](https://docs.ragas.io/)
+- [Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) (Anthropic)
+- [State of Agent Engineering](https://www.langchain.com/state-of-agent-engineering) (LangChain)
+
+#### 安全性・ガードレール
+- [PyRIT](https://github.com/Azure/PyRIT) (Microsoft)
+- [Guardrails AI](https://github.com/guardrails-ai/guardrails)
+- [NeMo Guardrails](https://github.com/NVIDIA/NeMo-Guardrails) (NVIDIA)
+- [Constitutional Classifiers](https://www.anthropic.com/research/constitutional-classifiers) (Anthropic)
+- [EU AI Act Guide 2026](https://sombrainc.com/blog/ai-regulations-2026-eu-ai-act)
+
+#### 可観測性・ドリフト検出
+- [Evidently AI](https://github.com/evidentlyai/evidently)
+- [Langfuse](https://github.com/langfuse/langfuse)
+- [Arize Phoenix](https://github.com/Arize-AI/phoenix)
 
 ### その他
 - [Writing a good CLAUDE.md](https://www.humanlayer.dev/blog/writing-a-good-claude-md) (HumanLayer)
