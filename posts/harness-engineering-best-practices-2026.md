@@ -875,14 +875,13 @@ Claude Codeは「作業場型」です。開発者の環境に直接入り、フ
 
 | 機能 | 説明 | ハーネスへの影響 |
 |------|------|----------------|
-| クラウドサンドボックス実行 | ネットワーク隔離コンテナでの並列タスク実行 | 開発者マシンを占有せずバッチ処理 |
-| 非同期タスクキュー | 複数タスクの同時バックグラウンド実行 | 3エンジニアで1日平均3.5 PR/人を達成 |
-| [Automations](https://developers.openai.com/codex/app/automations/) | 定期実行タスクの自動スケジューリング | イシュートリアージ、コード品質監査の完全自動化 |
-| ガベージコレクションエージェント | コーディング標準からの逸脱をスキャン→リファクタリングPR自動生成 | 四半期リファクタリングが不要に |
-| [App Serverプロトコル](https://openai.com/index/unlocking-the-codex-harness/) | 双方向JSON-RPCで全クライアント表面を統一 | CLI・VSCode・Webアプリを単一APIで統合 |
-| リアルタイムステアリング | 実行中のエージェントへの対話的介入 | 長時間タスクの方向修正コスト削減 |
-| [Agents SDK統合](https://developers.openai.com/codex/guides/agents-sdk/) | Codex CLIをMCPサーバーとして公開 | Designer→Developer→Testerのロールベースパイプライン |
-| [`notify`フック](https://developers.openai.com/codex/config-advanced/) | タスク完了時に外部コマンドを実行(JSON ペイロード) | 現時点で唯一のイベントフック。`agent-turn-complete`イベントのみ対応 |
+| クラウドサンドボックス実行 | ネットワーク隔離コンテナでの並列タスク実行 | AGENTS.mdの指示がサンドボックス内で忠実に再現されるため、ローカル環境差異を排除したハーネス設計が可能 |
+| 非同期タスクキュー | `codex cloud exec`による複数タスクの同時バックグラウンド実行 | 1つのAGENTS.mdで複数タスクを並列投入でき、ハーネスの検証サイクルが高速化 |
+| [Automations](https://developers.openai.com/codex/app/automations/) | 定期実行タスクの自動スケジューリング（現時点ではアプリ起動中のローカル実行） | AGENTS.mdに基づくリンター実行やコード品質スキャンを定期タスク化できる |
+| [App Serverプロトコル](https://openai.com/index/unlocking-the-codex-harness/) | 双方向JSON-RPCで全クライアント表面（CLI・VSCode・Web）を統一 | どのクライアントからでも同一のAGENTS.md・サンドボックス設定が適用される |
+| [リアルタイムステアリング](https://developers.openai.com/codex/app-server/) | `turn/steer`メソッドで実行中のエージェントに追加指示を送信 | 長時間タスクの途中でハーネス指示を補正でき、タスク再実行コストを削減 |
+| [Agents SDK統合](https://developers.openai.com/codex/guides/agents-sdk/) | `codex mcp-server`でCodex CLIをMCPサーバーとして公開 | 外部オーケストレーターからCodexタスクをプログラマティックに呼び出せる |
+| [`notify`フック](https://developers.openai.com/codex/config-advanced/) | タスク完了時に外部コマンドを実行（JSONペイロード） | 現時点で唯一のイベントフック。`agent-turn-complete`イベントのみ対応 |
 
 Codex には Claude Code の PreToolUse/PostToolUse のような「ツール実行の前後に介入する」仕組みはまだ存在しません。唯一のフック的機能が[`notify`](https://developers.openai.com/codex/config-advanced/)で、`~/.codex/config.toml`に以下のように設定します。
 
