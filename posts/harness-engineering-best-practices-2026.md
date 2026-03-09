@@ -882,6 +882,21 @@ Claude Codeは「作業場型」です。開発者の環境に直接入り、フ
 | [App Serverプロトコル](https://openai.com/index/unlocking-the-codex-harness/) | 双方向JSON-RPCで全クライアント表面を統一 | CLI・VSCode・Webアプリを単一APIで統合 |
 | リアルタイムステアリング | 実行中のエージェントへの対話的介入 | 長時間タスクの方向修正コスト削減 |
 | [Agents SDK統合](https://developers.openai.com/codex/guides/agents-sdk/) | Codex CLIをMCPサーバーとして公開 | Designer→Developer→Testerのロールベースパイプライン |
+| [`notify`フック](https://developers.openai.com/codex/config-advanced/) | タスク完了時に外部コマンドを実行(JSON ペイロード) | 現時点で唯一のイベントフック。`agent-turn-complete`イベントのみ対応 |
+
+Codex には Claude Code の PreToolUse/PostToolUse のような「ツール実行の前後に介入する」仕組みはまだ存在しません。唯一のフック的機能が[`notify`](https://developers.openai.com/codex/config-advanced/)で、`~/.codex/config.toml`に以下のように設定します。
+
+```toml
+notify = ["python3", "/path/to/notify.py"]
+```
+
+`notify`は`agent-turn-complete`イベント発火時に外部コマンドを呼び出し、`type`、`thread-id`、`input-messages`、`last-assistant-message`等を含むJSONペイロードを渡します。デスクトップ通知やSlack webhook には十分ですが、ツール実行前にリンターを走らせるといった品質ゲートには使えません。
+
+[GitHub Discussion #2150](https://github.com/openai/codex/discussions/2150)では83人以上がClaude Code相当のHooksシステムをリクエストしており、[Issue #2109](https://github.com/openai/codex/issues/2109)には475以上のupvoteが付いています。OpenAIは[Issue #12524](https://github.com/openai/codex/issues/12524)で「より汎用的なイベントフック機能を開発中で、現行の`notify`は将来的に非推奨にする予定」と回答しています。コミュニティからは包括的なHooksシステムの[PR](https://github.com/openai/codex/pull/9796)も提出されましたが、「現在feature contributionは受け付けていない」としてクローズされました。
+
+ではCodexユーザーはどう対処しているのでしょうか。現状のアプローチは「予防型」です。AGENTS.mdにルールを明文化し、プリコミットフックとリンターでインフラレベルで品質を強制します。Claude Codeのように「ファイル編集のたびにリンターが走る」リアクティブなループは作れないため、タスク完了後にまとめてリント実行 → 違反があればCodexに再度修正タスクを投げる、というバッチ的なワークフローになります。[codex-subagents-mcp](https://github.com/leonardsellem/codex-subagents-mcp)のようにMCPサーバー経由で専門サブエージェント(レビュアー、デバッガー、セキュリティ監査)をspawnするアプローチも試みられていますが、これもnotifyフックではなくMCPのdelegate呼び出しを使ったもので、ツール実行前後への介入とは異なります。
+
+この差がハーネスエンジニアリングの観点では決定的です。次のClaude Code固有の機能表と見比べると、その差が明確に見えてきます。
 
 ### Claude Code固有のハーネス機能
 
