@@ -151,7 +151,7 @@ OSSモデルで手元で動かしたい場合はYomiToku(NLS 0.770, 12.0s)が精
 
 ### サンプル1: 技術メモ(短い箇条書き)
 
-![サンプル1](/japanese-handwriting-ocr-comparison/sample1.jpg)
+![サンプル1](/img/japanese-handwriting-ocr-comparison/sample1.jpg)
 
 正解テキスト:
 
@@ -305,7 +305,7 @@ Ta
 
 ### サンプル2: 技術メモ(英語混在)
 
-![サンプル2](/japanese-handwriting-ocr-comparison/sample2.jpg)
+![サンプル2](/img/japanese-handwriting-ocr-comparison/sample2.jpg)
 
 正解テキスト:
 
