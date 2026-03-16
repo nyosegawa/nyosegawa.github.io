@@ -67,6 +67,8 @@ OSSモデルは[Modal](https://modal.com)というサーバーレスGPUプラッ
 | Modal (CPU) | [NDLOCR-Lite](https://github.com/ndl-lab/ndlocr-lite) | CC-BY-4.0 | 国立国会図書館 |
 | Modal (A10G) | [NDLOCR v2](https://github.com/ndl-lab/ndlocr_cli) | CC-BY-4.0 | 国立国会図書館 |
 
+DeepSeek-OCRとGOT-OCR 2.0は日本語非対応のモデルですが、OCRベンチマークで名前を見かけることが多いので一応比較に入れています。案の定スコアは低いですが、「日本語非対応モデルだとどうなるか」の参考にはなると思います。
+
 YomiTokuはCC-BY-NC-SA-4.0なので商用利用には注意が必要です。それ以外のOSSモデルはApache-2.0かMITなので商用でも使えます。
 
 ## 結果
@@ -111,14 +113,6 @@ GPT-5.4は10位(NLS 0.714)で、APIモデルの中では意外と振るいませ
 OSSモデルの中ではYomiToku(7位, NLS 0.770)が最上位です。日本語特化の設計が効いています。Chandra(8位)とolmOCR-2(9位)もNLS 0.7台で、GPT-5.4を上回っています。A100が必要なChandraに対してolmOCR-2はL4で動くので、コスパではolmOCR-2が優秀です。
 
 一方でPaddleOCR、NDLOCR系、GOT-OCR 2.0は手書き文字がかなり厳しく、活字向きのモデルであることがスコアに出ています。NDLOCR v2は国立国会図書館が公開しているモデルで、活字の印刷文書には強いのですが手書きメモは守備範囲外のようです。
-
-### 日本語非対応モデルの限界
-
-DeepSeek-OCRは日本語の手書き部分を中国語で出力してしまうケースが目立ちました。「permission mode auto対応」が「permission mode auto 优先 / 自动权限模式」になったり、「SDKを」が「SD卡」(SDカードの中国語)になったり。英語や中国語のOCRベンチマークでは高精度なモデルですが、日本語は学習データに十分含まれていないのだと思います。
-
-GOT-OCR 2.0も同様で、日本語の手書きメモに対しては `Cadi g/ Agent Bif f Application y` のようにほぼ意味不明な出力になります。[Appendix](#appendix-画像別ocr出力例)を見るとわかりますが、英語の活字パートだけ部分的に拾っている感じです。
-
-OSSモデルを選ぶ際は「そのモデルが日本語を学習データに含んでいるか」を事前に確認したほうがよいです。
 
 ### 速度と精度のトレードオフ
 
