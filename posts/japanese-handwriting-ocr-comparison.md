@@ -1,6 +1,6 @@
 ---
 title: "日本語の手書きメモを書き起こせるOCRを探すために18モデルを片っ端から試した話"
-description: "手書きメモの電子化がつらいので、Claude, Gemini, GPTからHunyuanOCR, PaddleOCRまで18モデルを3指標で比較しました。結論: Gemini 3.1 Proが最強です"
+description: "手書きメモの電子化がつらいので、Claude, Gemini, GPTからHunyuanOCR, GLM-OCRまで19モデルを3指標で比較しました。結論: Gemini 3.1 Proが最強です"
 date: 2026-03-17
 tags: [OCR, AI, Modal, 手書き, 評価]
 author: 逆瀬川ちゃん
@@ -64,6 +64,7 @@ OSSモデルは[Modal](https://modal.com)というサーバーレスGPUプラッ
 | Modal (T4) | [GOT-OCR 2.0](https://huggingface.co/stepfun-ai/GOT-OCR2_0) | Apache-2.0 | |
 | Modal (T4) | [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) | Apache-2.0 | |
 | Modal (T4) | [YomiToku](https://github.com/kotaro-kinoshita/yomitoku) | CC-BY-NC-SA-4.0 | 日本語特化 |
+| Modal (T4) | [GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) | MIT | 0.9B |
 | Modal (CPU) | [NDLOCR-Lite](https://github.com/ndl-lab/ndlocr-lite) | CC-BY-4.0 | 国立国会図書館 |
 | Modal (A10G) | [NDLOCR v2](https://github.com/ndl-lab/ndlocr_cli) | CC-BY-4.0 | 国立国会図書館 |
 
@@ -84,17 +85,18 @@ YomiTokuはCC-BY-NC-SA-4.0なので商用利用には注意が必要です。そ
 | 5 | Azure AI Vision | API | 0.830 | 0.845 | 0.332 | 4.2s |
 | 6 | Google Cloud Vision | API | 0.820 | 0.783 | 0.509 | 2.2s |
 | 7 | YomiToku | Modal | 0.770 | 0.768 | 0.400 | 12.0s |
-| 8 | Chandra | Modal | 0.734 | 0.780 | 0.361 | 29.2s |
-| 9 | olmOCR-2 | Modal | 0.723 | 0.786 | 0.370 | 45.4s |
-| 10 | GPT-5.4 | API | 0.714 | 0.814 | 0.331 | 123.4s |
-| 11 | HunyuanOCR | Modal | 0.698 | 0.754 | 0.367 | 30.3s |
-| 12 | Claude 4.5 Sonnet | API | 0.640 | 0.709 | 0.465 | 16.4s |
-| 13 | Nanonets-OCR-s | Modal | 0.557 | 0.597 | 0.615 | 69.1s |
-| 14 | DeepSeek-OCR | Modal | 0.446 | 0.530 | 0.671 | 35.4s |
-| 15 | PaddleOCR | Modal | 0.353 | 0.394 | 0.784 | 12.8s |
-| 16 | NDLOCR-Lite | Modal | 0.271 | 0.394 | 0.915 | 10.5s |
-| 17 | GOT-OCR 2.0 | Modal | 0.194 | 0.250 | 0.888 | 10.2s |
-| 18 | NDLOCR v2 | Modal | 0.064 | 0.087 | 0.958 | 28.7s |
+| 8 | GLM-OCR | Modal | 0.738 | 0.792 | 0.387 | 29.7s |
+| 9 | Chandra | Modal | 0.734 | 0.780 | 0.361 | 29.2s |
+| 10 | olmOCR-2 | Modal | 0.723 | 0.786 | 0.370 | 45.4s |
+| 11 | GPT-5.4 | API | 0.714 | 0.814 | 0.331 | 123.4s |
+| 12 | HunyuanOCR | Modal | 0.698 | 0.754 | 0.367 | 30.3s |
+| 13 | Claude 4.5 Sonnet | API | 0.640 | 0.709 | 0.465 | 16.4s |
+| 14 | Nanonets-OCR-s | Modal | 0.557 | 0.597 | 0.615 | 69.1s |
+| 15 | DeepSeek-OCR | Modal | 0.446 | 0.530 | 0.671 | 35.4s |
+| 16 | PaddleOCR | Modal | 0.353 | 0.394 | 0.784 | 12.8s |
+| 17 | NDLOCR-Lite | Modal | 0.271 | 0.394 | 0.915 | 10.5s |
+| 18 | GOT-OCR 2.0 | Modal | 0.194 | 0.250 | 0.888 | 10.2s |
+| 19 | NDLOCR v2 | Modal | 0.064 | 0.087 | 0.958 | 28.7s |
 
 Avg Timeは1画像あたりの平均処理時間です。Modalモデルはバッチ処理の合計時間を画像数で割っているので、コールドスタートを含む点に注意してください。
 
@@ -154,10 +156,24 @@ OSSモデルで手元で動かしたい場合はYomiToku(NLS 0.770, 12.0s)が精
 
 ## まとめ
 
-- 日本語手書きメモのOCRに使えるモデルを探して18モデルを比較しました
+- 日本語手書きメモのOCRに使えるモデルを探して19モデルを比較しました
 - Gemini 3.1 Pro Preview (NLS 0.924) が最高精度で、Flash Liteでもほぼ同等です
 - OSSではYomiToku (NLS 0.770) が健闘しています
 - 評価コードは [ocr-comparison](https://github.com/nyosegawa/ocr-comparison) で公開しています
+
+## 追記 (2026-03-17): GLM-OCRを追加して19モデルに
+
+記事公開後に[GLM-OCR](https://huggingface.co/zai-org/GLM-OCR)を入れ忘れていたことに気づいたので追加しました。
+
+GLM-OCRはCogViT (0.4B) + GLM-0.5Bの合計0.9Bパラメータという超軽量モデルで、[OmniDocBench V1.5](https://arxiv.org/abs/2412.07626)で1位のスコアを記録しています。vLLMでは`glm_ocr`アーキテクチャがまだ未サポートだったので、transformersのソースビルドで直接推論しています。
+
+結果はNLS 0.738で8位にランクインしました。0.9Bでこの精度はかなり優秀です。T4 GPUで動くのでModalのコストも安く、A100が必要なChandra(NLS 0.734)とほぼ同じ精度をT4で出せるのはコスパが光ります。
+
+OSSモデルのパラメータ数を並べるとolmOCR-2が7B、Nanonetsが4B、HunyuanOCRが1Bで、GLM-OCRの0.9Bは最軽量クラスです。それでNLS 0.738はパラメータ効率がかなり高いと言えます。
+
+出力を見ると「比較」が「比较」(簡体字)になっていたり、DeepSeek-OCRと似た中国語リークが出ています。ベースモデルのGLMが中国語に強いので、日本語の漢字を簡体字で出力してしまうケースがあるようです。一方で「Agent skill が Web App を wrap」のような英語混在部分はそこそこ読めていて、0.9Bにしては頑張っています。
+
+上の結果テーブルとモデル一覧は更新済みです。
 
 ## Appendix: 画像別OCR出力例
 
@@ -282,6 +298,14 @@ S/mairmoi day 6 yha zuag (aipe).
 、麻雀AZをCodingAgutで
 VSR →31C、かん
 、仕様もの周防について
+```
+
+GLM-OCR (NLS=0.690)
+```
+、Coding Agent 時代のApplication
+、麻雀 AIをCoding Agentで
+、VSR、トリックが人
+、任作きの商談について。
 ```
 
 DeepSeek-OCR (NLS=0.468)
@@ -453,6 +477,19 @@ HunyuanOCR (NLS=0.695)
 ・（Agent skill）
 ```
 
+GLM-OCR (NLS=0.666)
+```
+permission mode auto talk
+徘行の比較式。
+→ SDKを。
+比较。
+HarmonyとSDKを接って。
+
+Agent skill 6 Web Appを wrap 13 でか
+Web App 6 Agentを wrap 11 でか
+(Agent skill)
+```
+
 Chandra (NLS=0.693)
 ```
 permission mode auto kill
@@ -601,6 +638,7 @@ def main(input: str, output: str):
     - [CC-OCR: A Comprehensive and Challenging OCR Benchmark for Evaluating Large Multimodal Models in Literacy](https://arxiv.org/abs/2412.02210)
     - [OCRBench v2: An Improved Benchmark for Evaluating Large Multimodal Models](https://arxiv.org/abs/2501.00321)
 - モデル
+    - [GLM-OCR (zai-org)](https://huggingface.co/zai-org/GLM-OCR)
     - [HunyuanOCR (Tencent)](https://github.com/Tencent-Hunyuan/HunyuanOCR)
     - [DeepSeek-OCR](https://arxiv.org/abs/2510.18234)
     - [GOT-OCR 2.0](https://arxiv.org/abs/2409.01704)
