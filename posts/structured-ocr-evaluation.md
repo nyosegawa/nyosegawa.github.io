@@ -197,23 +197,97 @@ GPT-5.4の平均6.9sが最速です。前回の手書きOCRでは123.4sで圧倒
 
 ![invoice_004](/img/structured-ocr-evaluation/invoice_004.jpg)
 
-モノクロ基調のコンパクトなデザインで、明細4行の飲食業の請求書です。上位4モデルはほぼ完全に抽出できています。Claude 4.5 Sonnetだけ全体精度0.792とやや低く、複数フィールドでスコアを落としています。
+モノクロ基調のコンパクトなデザインで、明細4行の飲食業の請求書です。Claude 4.6 Opusの抽出結果はこうなります。
+
+```json
+{
+  "vendor_name": "株式会社なにわフードサービス",
+  "vendor_address": "大阪府大阪市中央区道頓堀二丁目3番8号 なにわビル3階",
+  "vendor_phone": "06-6213-4567",
+  "vendor_registration_number": "T2721045678901",
+  "client_name": "有限会社心斎橋キッチン",
+  "client_address": "大阪府大阪市中央区心斎橋筋一丁目7番5号",
+  "invoice_number": "INV-2026-0317-04",
+  "issue_date": "2026-03-17",
+  "due_date": "2026-04-20",
+  "line_items": [
+    {"description": "食材仕入（野菜・果物類）", "quantity": 30, "unit": "kg", "unit_price": 800, "amount": 24000},
+    {"description": "食材仕入（精肉・鮮魚類）", "quantity": 15, "unit": "kg", "unit_price": 2200, "amount": 33000},
+    {"description": "調理器具消耗品一式", "quantity": 1, "unit": "式", "unit_price": 18500, "amount": 18500},
+    {"description": "店舗清掃サービス（月次）", "quantity": 4, "unit": "回", "unit_price": 9000, "amount": 36000}
+  ],
+  "subtotal": 111500,
+  "tax_rate": 0.1,
+  "tax_amount": 11150,
+  "total_amount": 122650,
+  "bank_name": "大阪シティ信用金庫",
+  "bank_branch": "道頓堀支店",
+  "bank_account_type": "普通",
+  "bank_account_number": "2345678",
+  "bank_account_holder": "カ）ナニワフードサービス",
+  "notes": "お支払期限までにご指定口座へお振込みください。食材の品質に関するお問い合わせはお気軽にご連絡ください。"
+}
+```
+
+20フィールドを正確に抽出できています。明細の品目名・数量・単価・金額もすべて正しいです。上位4モデルはこの請求書に対してほぼ完全な抽出ができていました。
 
 ### レシート: receipt_008（58mm幅、飲食）
 
 ![receipt_008](/img/structured-ocr-evaluation/receipt_008.jpg)
 
-58mm幅のサーマル印字風レシートです。区切り線に━を使い、合計は大フォントで強調しています。明細は2行表示パターン（品名 + 数量×単価）です。
+58mm幅のサーマル印字風レシートです。区切り線に━を使い、合計は大フォントで強調しています。
 
-上位モデルはほぼ完全に読めています。Claude 4.5 Sonnetだけissue_dateが0.0になっていて、日付のパース（R8.03.17形式の和暦）に失敗しています。
+```json
+{
+  "store_name": "味噌家 名古屋栄店",
+  "store_address": "愛知県名古屋市中区栄3丁目15-22",
+  "store_phone": "052-263-7841",
+  "store_registration_number": "T4920163857402",
+  "receipt_number": "R-20260317-0391",
+  "issue_date": "2026-03-17",
+  "client_name": null,
+  "line_items": [
+    {"description": "味噌カツ定食", "quantity": 1, "unit_price": 950, "amount": 950},
+    {"description": "生ビール(中)", "quantity": 1, "unit_price": 580, "amount": 580}
+  ],
+  "subtotal": 1530,
+  "tax_rate_8": 950,
+  "tax_amount_8": 76,
+  "tax_rate_10": 580,
+  "tax_amount_10": 58,
+  "total_amount": 1664,
+  "payment_method": "現金",
+  "notes": null
+}
+```
 
-### 名刺: business_card_005（縦型、教育系）
+モノスペースフォントで詰め込まれたレシートでも、店名・登録番号・明細・軽減税率の内訳まで正しく抽出しています。`client_name`がnullなのも正しい判断です（POSレシートに宛名はない）。
+
+### 名刺: business_card_005（不動産系）
 
 ![business_card_005](/img/structured-ocr-evaluation/business_card_005.jpg)
 
-教育系の名刺です。Claude Opus、Gemini両モデルは全フィールド完全一致(1.0)を達成しています。GPT-5.4もほぼ完璧ですが、postal_codeの表記で僅かに差が出ることがあります。
+不動産系の名刺です。
 
-名刺は全体的に最も簡単なタスクで、フィールド数が13と少なくレイアウトが定型的なため、上位モデルにとっては「間違えようがない」水準です。
+```json
+{
+  "person_name": "中村 陽介",
+  "person_name_reading": "なかむら ようすけ",
+  "company_name": "株式会社四国ハウジング",
+  "company_name_en": "Shikoku Housing Co., Ltd.",
+  "department": "開発企画部",
+  "title": "部長",
+  "postal_code": "760-0033",
+  "address": "香川県高松市丸の内1丁目3-2 高松センタービル10F",
+  "phone": "087-822-5670",
+  "fax": "087-822-5671",
+  "mobile": "080-2241-3388",
+  "email": "yosuke.nakamura@shikoku-housing.co.jp",
+  "website": "https://www.shikoku-housing.co.jp"
+}
+```
+
+13フィールドすべて完全一致です。Claude Opus、Gemini両モデルは名刺10枚すべてで1.0を達成しています。
 
 ## References
 
