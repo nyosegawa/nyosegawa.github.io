@@ -2,7 +2,7 @@
 
 逆瀬川ちゃんのブログです。記事は主にCoding Agentで執筆されています。
 
-https://nyosegawa.github.io/
+https://nyosegawa.com/
 
 ## 技術スタック
 

@@ -3,7 +3,7 @@ import blog from "blog/mod.ts";
 import katex from "lume/plugins/katex.ts";
 
 const site = lume({
-  location: new URL("https://nyosegawa.github.io"),
+  location: new URL("https://nyosegawa.com"),
 });
 
 site.use(katex());
@@ -24,6 +24,7 @@ site.ignore("index.vto");
 // Copy static assets to output
 site.copy("og");
 site.copy("img");
+site.copy("CNAME");
 
 // Auto-set OG image for posts based on slug
 site.preprocess([".md"], (pages) => {
@@ -32,7 +33,7 @@ site.preprocess([".md"], (pages) => {
       // Extract slug from path: "/posts/hello-lume" -> "hello-lume"
       const slug = page.src.path.replace(/^\/posts\//, "");
       if (slug) {
-        page.data.image = `/og/${slug}.png`;
+        page.data.image = `/og/${slug}.jpg`;
       }
     }
   }
@@ -53,7 +54,7 @@ site.process([".html"], (pages) => {
     // Open external links in new tab
     doc.querySelectorAll("a[href^='http']").forEach((link) => {
       const href = link.getAttribute("href");
-      if (href && !href.startsWith("https://nyosegawa.github.io")) {
+      if (href && !href.startsWith("https://nyosegawa.com")) {
         link.setAttribute("target", "_blank");
         link.setAttribute("rel", "noopener noreferrer");
       }
@@ -85,7 +86,7 @@ site.process([".html"], (pages) => {
 
       addMeta("property", "og:image:width", "1200");
       addMeta("property", "og:image:height", "630");
-      addMeta("property", "og:image:type", "image/png");
+      addMeta("property", "og:image:type", "image/jpeg");
 
       if (imageUrl && !head.querySelector("meta[name='twitter:image']")) {
         addMeta("name", "twitter:image", imageUrl);

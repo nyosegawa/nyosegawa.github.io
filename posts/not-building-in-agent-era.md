@@ -14,7 +14,7 @@ author: 逆瀬川ちゃん
 
 ## 誰でも爆速で作れるようになってしまった
 
-[以前の記事](https://nyosegawa.github.io/posts/development-and-organization-in-agent-era/)で書いたように、新しい時代の開発は速度を生みます。業種・ソフトウェアのタイプや規模にもよりますが、以前とは段違いの開発速度が見込めます。かつてチームで数ヶ月かけていた規模のものが数日で形になることもありえます。
+[以前の記事](https://nyosegawa.com/posts/development-and-organization-in-agent-era/)で書いたように、新しい時代の開発は速度を生みます。業種・ソフトウェアのタイプや規模にもよりますが、以前とは段違いの開発速度が見込めます。かつてチームで数ヶ月かけていた規模のものが数日で形になることもありえます。
 
 この何でも作れてしまう感覚は、正直すごく楽しいです。アイデアを思いついて、Agentに伝えて、数時間後にはもう動くものがある。寝る前に仕込んでおけば朝にはできている。次から次へと新しいものを作りたくなります。
 
@@ -99,7 +99,7 @@ Agentが裏で動いている時間に、本当に必要なものだけを選ぶ
 
 - [Follow the Money, Part 2: AI Makes It Worse – Break a Pencil](https://www.breakapencil.com/post/follow-the-money-part-2-ai-makes-it-worse)
 - [開発速度が速い #とは（LayerX社内資料）– Speaker Deck](https://speakerdeck.com/layerx/how-fast-is-the-development-speed)
-- [新しい時代の開発と組織について – nyosegawa.github.io](https://nyosegawa.github.io/posts/development-and-organization-in-agent-era/)
+- [新しい時代の開発と組織について – nyosegawa.com](https://nyosegawa.com/posts/development-and-organization-in-agent-era/)
 - [2026 Agentic Coding Trends Report – Anthropic](https://resources.anthropic.com/2026-agentic-coding-trends-report)
 - [Code Review – Anthropic](https://claude.com/blog/code-review)
 - [Code Review Documentation – Claude Code](https://code.claude.com/docs/en/code-review)

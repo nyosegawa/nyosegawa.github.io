@@ -215,9 +215,9 @@ def generate_card(title: str, tags: list[str], output_path: Path):
     # Downscale to final size for smooth anti-aliasing
     img = img.resize((WIDTH, HEIGHT), Image.LANCZOS)
 
-    # Save
+    # Save as optimized JPEG
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    img.save(str(output_path), "PNG")
+    img.save(str(output_path), "JPEG", quality=85, optimize=True)
 
 
 def main():
@@ -237,7 +237,7 @@ def main():
     generated = 0
     for post_path in posts:
         slug = post_path.stem
-        output_path = OG_DIR / f"{slug}.png"
+        output_path = OG_DIR / f"{slug}.jpg"
 
         if not force and output_path.exists() and output_path.stat().st_mtime > post_path.stat().st_mtime:
             print(f"  skip (up to date): {slug}")

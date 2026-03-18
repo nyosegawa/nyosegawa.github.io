@@ -8,7 +8,7 @@ author: 逆瀬川ちゃん
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！
 
-今日は Remotion でプロダクト紹介動画を作るときの知見を、どう Skill に落とし込んだかを、[spark-banana](https://nyosegawa.github.io/posts/spark-banana-introduction/) の実制作を例にまとめていきたいと思います。
+今日は Remotion でプロダクト紹介動画を作るときの知見を、どう Skill に落とし込んだかを、[spark-banana](https://nyosegawa.com/posts/spark-banana-introduction/) の実制作を例にまとめていきたいと思います。
 
 <iframe
   width="100%"
@@ -271,11 +271,11 @@ npx remotion render SparkBananaTeaser out.mp4
   allowfullscreen
 ></iframe>
 
-[YouTubeで見る](https://www.youtube.com/watch?v=2VU2mJ6XHTs) / [記事](https://nyosegawa.github.io/posts/hiragana-asr/)
+[YouTubeで見る](https://www.youtube.com/watch?v=2VU2mJ6XHTs) / [記事](https://nyosegawa.com/posts/hiragana-asr/)
 
 ## References
 
-- [spark-banana 紹介記事](https://nyosegawa.github.io/posts/spark-banana-introduction/)
+- [spark-banana 紹介記事](https://nyosegawa.com/posts/spark-banana-introduction/)
 - [spark-banana Repository](https://github.com/nyosegawa/spark-banana)
 - [remotion-promo-video-factory Skill](https://github.com/nyosegawa/skills/tree/main/skills/remotion-promo-video-factory)
 - [Remotion Docs](https://www.remotion.dev/docs)

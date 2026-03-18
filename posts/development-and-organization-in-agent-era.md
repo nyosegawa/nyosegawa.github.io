@@ -76,7 +76,7 @@ Agentがアイデアをうまく生み出し、検収まで自律的にやれる
 
 ボトルネックを回避するために自分が意識しているのは2つの軸です。
 
-1つ目は自動化です。[前回の記事](https://nyosegawa.github.io/posts/claude-code-verify-command/)で書いたanti-human-bottleneckスキルのように、Agentが人間に聞かずに自分で進む設計にします。タスク管理も[Linear連携スキル](https://nyosegawa.github.io/posts/claude-code-linear-task-skill/)で自動化しています。「ずっと電話がかかってくる状態」にしないことが大事です。
+1つ目は自動化です。[前回の記事](https://nyosegawa.com/posts/claude-code-verify-command/)で書いたanti-human-bottleneckスキルのように、Agentが人間に聞かずに自分で進む設計にします。タスク管理も[Linear連携スキル](https://nyosegawa.com/posts/claude-code-linear-task-skill/)で自動化しています。「ずっと電話がかかってくる状態」にしないことが大事です。
 
 2つ目は認知負荷の低い対応アプローチです。対応待ちがあっても他が進むようにします。ここで重要なのがロードタイムという概念です。
 
