@@ -17,6 +17,8 @@ extra_head:
   - <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   - <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   - '<meta name="twitter:site" content="@gyakuse">'
+  - '<script async src="https://www.googletagmanager.com/gtag/js?id=G-CKYW764NFP"></script>'
+  - '<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-CKYW764NFP");</script>'
 
 metas:
   site: "逆瀬川ちゃんのブログ"
