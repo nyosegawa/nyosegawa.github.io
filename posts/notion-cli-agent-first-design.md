@@ -1,5 +1,5 @@
 ---
-title: "Notion Remote MCPをCLIにした: Agent時代のCLI設計"
+title: "全Notion利用者のための、Coding Agentに対応したCLIを作った話"
 description: "全Notion利用者のための、Coding Agentに対応したCLIを作った話"
 date: 2026-03-19
 tags: [Notion, MCP, CLI, Agent, Claude Code]
