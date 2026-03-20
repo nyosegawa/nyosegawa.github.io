@@ -3,4 +3,5 @@ _cache
 .env
 .DS_Store
 draft
-.claude/worktrees
+.claude/*
+!.claude/skills/
