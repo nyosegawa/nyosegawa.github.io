@@ -39,11 +39,35 @@ site.preprocess([".md"], (pages) => {
   }
 });
 
+// Compute CSS hash for cache busting
+let cssHash = "";
+site.process([".css"], (pages) => {
+  for (const page of pages) {
+    if (page.data.url === "/styles.css") {
+      const content = page.content as string;
+      let hash = 0;
+      for (let i = 0; i < content.length; i++) {
+        hash = ((hash << 5) - hash + content.charCodeAt(i)) | 0;
+      }
+      cssHash = (hash >>> 0).toString(16);
+      break;
+    }
+  }
+});
+
 // Post-process HTML
 site.process([".html"], (pages) => {
   for (const page of pages) {
     const doc = page.document;
     if (!doc) continue;
+
+    // Cache-bust CSS with content hash
+    if (cssHash) {
+      const cssLink = doc.querySelector("link[href='/styles.css']");
+      if (cssLink) {
+        cssLink.setAttribute("href", `/styles.css?v=${cssHash}`);
+      }
+    }
 
     const title = doc.querySelector("title");
     const url = page.data.url;
