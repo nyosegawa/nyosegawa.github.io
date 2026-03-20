@@ -67,14 +67,6 @@ site.process([".html"], (pages) => {
       title.textContent = title.textContent.replace("Portfolio - ", "");
     }
 
-    // Fix og:title for portfolio page
-    if (url === "/") {
-      const ogTitle = head?.querySelector("meta[property='og:title']");
-      if (ogTitle) {
-        ogTitle.setAttribute("content", homeSiteName);
-      }
-    }
-
     // Open external links in new tab
     doc.querySelectorAll("a[href^='http']").forEach((link) => {
       const href = link.getAttribute("href");
@@ -86,6 +78,14 @@ site.process([".html"], (pages) => {
 
     const head = doc.querySelector("head");
     if (!head) continue;
+
+    // Fix og:title for portfolio page
+    if (url === "/") {
+      const ogTitle = head.querySelector("meta[property='og:title']");
+      if (ogTitle) {
+        ogTitle.setAttribute("content", homeSiteName);
+      }
+    }
 
     // Swap og:site_name for blog/post pages
     if (isBlogPage) {
