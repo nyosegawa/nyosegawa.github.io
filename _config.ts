@@ -67,6 +67,14 @@ site.process([".html"], (pages) => {
       title.textContent = title.textContent.replace("Portfolio - ", "");
     }
 
+    // Fix og:title for portfolio page
+    if (url === "/") {
+      const ogTitle = head?.querySelector("meta[property='og:title']");
+      if (ogTitle) {
+        ogTitle.setAttribute("content", homeSiteName);
+      }
+    }
+
     // Open external links in new tab
     doc.querySelectorAll("a[href^='http']").forEach((link) => {
       const href = link.getAttribute("href");
