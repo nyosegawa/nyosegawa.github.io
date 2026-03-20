@@ -37,17 +37,17 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
   "rate_limits": {
     "five_hour": {
       "used_percentage": 42.3,
-      "resets_at": "2026-03-20T15:00:00Z"
+      "resets_at": 1774036800
     },
     "seven_day": {
       "used_percentage": 85.7,
-      "resets_at": "2026-03-24T00:00:00Z"
+      "resets_at": 1774580400
     }
   }
 }
 ```
 
-`used_percentage`が使用率、`resets_at`がリセット時刻です。既存の`context_window.used_percentage`（コンテキストウィンドウの使用率）と合わせて表示すれば、残りリソースが一目でわかります。
+`used_percentage`が使用率、`resets_at`がリセット時刻（Unixタイムスタンプ・秒）です（初版ではISO 8601形式と記載していましたが、実際にはUnixタイムスタンプでした。[yagrabit](https://x.com/yagrabit)さんご指摘ありがとうございます！）。既存の`context_window.used_percentage`（コンテキストウィンドウの使用率）と合わせて表示すれば、残りリソースが一目でわかります。
 
 ## 設定方法
 
