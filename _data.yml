@@ -6,9 +6,8 @@ home:
     このブログ記事は主にCoding Agentで執筆されています。
 
 menu_links:
-  - title: Archive
-    url: /archive/
-    icon: archive
+  - text: Blog
+    href: /blog/
 
 extra_head:
   - <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,9 +19,112 @@ extra_head:
   - '<script async src="https://www.googletagmanager.com/gtag/js?id=G-CKYW764NFP"></script>'
   - '<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-CKYW764NFP");</script>'
 
+portfolio:
+  name: 逆瀬川ちゃんのほーむぺーじ
+  bio: |
+    ソフトウェアエンジニア。AIアプリケーション・エージェントの開発をしています。
+  links:
+    - text: GitHub
+      href: https://github.com/nyosegawa
+      icon: github
+    - text: X
+      href: https://x.com/gyakuse
+      icon: x
+    - text: Zenn
+      href: https://zenn.dev/sakasegawa
+      icon: zenn
+    - text: Email
+      href: mailto:nyosegawa@gmail.com
+      icon: email
+
+  projects:
+    - title: Computer Agent / RPA Agent
+      description: Computer-use を使ったAgent群
+      image: /img/portfolio/computer-agent.png
+      links:
+        - text: 記事
+          href: https://zenn.dev/sakasegawa/articles/2a7119364775e7
+        - text: Computer Agent Demo
+          href: https://www.youtube.com/watch?v=xiZNvoGGNqk
+        - text: RPA Agent Demo
+          href: https://www.youtube.com/watch?v=6PubH-U_nuQ
+
+    - title: 字幕・吹替システム
+      description: 動画の多言語字幕生成・AI吹替システム
+      video: https://www.youtube.com/watch?v=vV1q4pVCjOc
+      links:
+        - text: 字幕 Demo
+          href: https://www.youtube.com/watch?v=vV1q4pVCjOc
+        - text: 吹替 Demo (ES→JA)
+          href: https://www.youtube.com/watch?v=hbgJTcwPzWk
+        - text: 吹替 Demo (DE→KO)
+          href: https://www.youtube.com/watch?v=wdf8MLU_gnY
+
+    - title: 仮想試着
+      description: バーチャル試着システム
+      image: /img/portfolio/virtual-tryon.png
+      links:
+        - text: Demo
+          href: https://www.youtube.com/watch?v=Z1pv_vb9diI
+
+    - title: ひらがなASR
+      description: 日本語音声をひらがなで書き起こす音声認識モデル
+      video: https://www.youtube.com/watch?v=2VU2mJ6XHTs
+      links:
+        - text: 記事
+          href: /posts/hiragana-asr/
+        - text: Demo
+          href: https://huggingface.co/spaces/sakasegawa/hiragana-asr
+        - text: GitHub
+          href: https://github.com/nyosegawa/hiragana-asr
+        - text: Model
+          href: https://huggingface.co/sakasegawa/japanese-wav2vec2-large-hiragana-ctc
+
+    - title: spark-banana
+      description: Codex Spark と nanobananaを使ったUI爆速修正ツール
+      image: /img/portfolio/spark-banana.jpeg
+      links:
+        - text: 記事
+          href: /posts/spark-banana-introduction/
+        - text: GitHub
+          href: https://github.com/nyosegawa/spark-banana
+
+    - title: notion-cli
+      description: Coding Agent向けNotion CLIツール
+      image: /og/notion-cli-for-coding-agent.jpg
+      links:
+        - text: 記事
+          href: /posts/notion-cli-for-coding-agent/
+        - text: GitHub
+          href: https://github.com/nyosegawa/notion-cli
+        - text: npm
+          href: https://www.npmjs.com/package/@sakasegawa/ncli
+
+  featured_posts:
+    - title: 日本語手書きOCR 21モデル比較
+      href: /posts/japanese-handwriting-ocr-comparison/
+      image: /og/japanese-handwriting-ocr-comparison.jpg
+      date: 2026-03-17
+    - title: Harness Engineeringベストプラクティス
+      href: /posts/harness-engineering-best-practices-2026/
+      image: /og/harness-engineering-best-practices-2026.jpg
+      date: 2026-03-09
+    - title: skill-creatorから学ぶSkill設計と、Orchestration Skillの作り方
+      href: /posts/skill-creator-and-orchestration-skill/
+      image: /og/skill-creator-and-orchestration-skill.jpg
+      date: 2026-03-04
+    - title: Coding Agentについてのまとめ (2026年1月)
+      href: https://zenn.dev/sakasegawa/articles/af8ede2e4d7da4
+      image: /img/portfolio/zenn-coding-agent.png
+      date: 2026-01-26
+    - title: 10個のAIアプリケーションと3個のAIエージェントを1人で開発してみた
+      href: https://zenn.dev/sakasegawa/articles/2a7119364775e7
+      image: /img/portfolio/zenn-10apps.png
+      date: 2025-08-07
+
 metas:
-  site: "逆瀬川ちゃんのブログ"
-  description: "=description || 逆瀬川ちゃんのブログです。このブログ記事は主にCoding Agentで執筆されています。"
+  site: "逆瀬川ちゃんのほーむぺーじ"
+  description: "=description || 逆瀬川のポートフォリオ・ブログ"
   title: "=title"
   image: "=image || https://nyosegawa.com/icon.png"
   twitter: "@gyakuse"

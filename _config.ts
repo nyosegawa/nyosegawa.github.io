@@ -18,13 +18,13 @@ site.use(blog({
 // Override theme's archive_result.page.js to fix empty tag/author bug
 site.ignore("archive_result.page.js");
 
-// Override theme's index.vto with custom paginated home page
-site.ignore("index.vto");
+// Theme's index.vto is overridden by our local index.vto (portfolio page)
 
 // Copy static assets to output
 site.copy("og");
 site.copy("img");
 site.copy("CNAME");
+site.copy("icon.png");
 
 // Auto-set OG image for posts based on slug
 site.preprocess([".md"], (pages) => {
@@ -45,10 +45,26 @@ site.process([".html"], (pages) => {
     const doc = page.document;
     if (!doc) continue;
 
-    // Remove "Home - " prefix from top page title
     const title = doc.querySelector("title");
-    if (title?.textContent?.startsWith("Home - ")) {
-      title.textContent = title.textContent.replace("Home - ", "");
+    const url = page.data.url;
+    const isBlogPage = url?.startsWith("/blog/") || url?.startsWith("/posts/") || url?.startsWith("/archive/") || url?.startsWith("/author/");
+    const homeSiteName = "逆瀬川ちゃんのほーむぺーじ";
+    const blogSiteName = "逆瀬川ちゃんのブログ";
+
+    // Swap site name for blog/post pages
+    if (isBlogPage) {
+      if (title) {
+        title.textContent = title.textContent.replace(homeSiteName, blogSiteName);
+      }
+      const navbarHome = doc.querySelector(".navbar-home strong");
+      if (navbarHome) {
+        navbarHome.textContent = blogSiteName;
+      }
+    }
+
+    // Remove "Portfolio - " prefix from top page title
+    if (title?.textContent?.startsWith("Portfolio - ")) {
+      title.textContent = title.textContent.replace("Portfolio - ", "");
     }
 
     // Open external links in new tab
@@ -63,8 +79,16 @@ site.process([".html"], (pages) => {
     const head = doc.querySelector("head");
     if (!head) continue;
 
+    // Swap og:site_name for blog/post pages
+    if (isBlogPage) {
+      const ogSiteName = head.querySelector("meta[property='og:site_name']");
+      if (ogSiteName) {
+        ogSiteName.setAttribute("content", blogSiteName);
+      }
+    }
+
     // Change og:type to "article" for blog posts
-    const isPost = page.data.url?.startsWith("/posts/");
+    const isPost = url?.startsWith("/posts/");
     if (isPost) {
       const ogType = head.querySelector("meta[property='og:type']");
       if (ogType) {
