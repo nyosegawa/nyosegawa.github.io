@@ -84,7 +84,7 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 
 ### Pattern 2: Sparkline Gauge
 
-`▁▂▃▄▅▆▇█`のブロック要素を使ったスパークラインスタイルです。
+ブロック要素を使ったスパークラインスタイルです。
 
 ![Pattern 2: Sparkline Gauge](/img/claude-code-statusline-rate-limits/pattern2.png)
 
@@ -92,7 +92,7 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 
 ### Pattern 3: Ring Meter
 
-`○◔◑◕●`の円グラフ風アイコンを使ったスタイルです。
+円グラフ風アイコンを使ったスタイルです。
 
 ![Pattern 3: Ring Meter](/img/claude-code-statusline-rate-limits/pattern3.png)
 
@@ -100,7 +100,7 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 
 ### Pattern 4: Fine Bar + Gradient
 
-`▏▎▍▌▋▊▉█`を使った1%精度の細密プログレスバーです。
+1%精度の細密プログレスバーです。
 
 ![Pattern 4: Fine Bar + Gradient](/img/claude-code-statusline-rate-limits/pattern4.png)
 
@@ -108,7 +108,7 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 
 ### Pattern 5: Braille Dots
 
-`⣀⣄⣤⣦⣶⣷⣿`の点字パターンを使ったドットスタイルです。
+点字パターンを使ったドットスタイルです。
 
 ![Pattern 5: Braille Dots](/img/claude-code-statusline-rate-limits/pattern5.png)
 
