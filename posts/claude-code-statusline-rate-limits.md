@@ -79,7 +79,7 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 
 Windowsでは`chmod +x`は不要です。代わりに`python`コマンド経由でスクリプトを実行します。[Claude Codeは内部的にGit Bashを使ってコマンドを実行する](https://code.claude.com/docs/en/setup)ため、パスは`~`で指定できます。
 
-> **Note:** Pythonは別途インストールが必要です。[python.org](https://www.python.org/downloads/)からインストールし、PATHに追加してください。また、ANSIエスケープシーケンス（色表示）を正しく表示するには**Windows Terminal**の使用を推奨します。
+> **Note:** Pythonは別途インストールが必要です。
 
 ## 5つのビジュアルパターン
 
