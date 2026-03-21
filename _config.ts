@@ -128,6 +128,22 @@ site.process([".html"], (pages) => {
       }
     }
 
+    // Add copy button to code blocks
+    doc.querySelectorAll("pre").forEach((pre) => {
+      const btn = doc.createElement("button");
+      btn.className = "copy-btn";
+      btn.textContent = "Copy";
+      pre.prepend(btn);
+    });
+
+    // Inject copy button script (once per page, at end of body)
+    const body = doc.querySelector("body");
+    if (body && doc.querySelector("pre .copy-btn")) {
+      const script = doc.createElement("script");
+      script.textContent = `document.addEventListener("click",function(e){var b=e.target;if(!b.classList.contains("copy-btn"))return;var code=b.parentElement.querySelector("code");if(!code)return;navigator.clipboard.writeText(code.textContent).then(function(){b.textContent="Copied!";setTimeout(function(){b.textContent="Copy"},1500)})})`;
+      body.append(script);
+    }
+
     // Add og:image dimensions and twitter:image
     const ogImage = head.querySelector("meta[property='og:image']");
     if (ogImage) {

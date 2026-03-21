@@ -290,12 +290,36 @@ tr:hover td {
 /* ====== Code ====== */
 
 pre {
+  position: relative;
   border-radius: 0.6em;
   border: 1px solid var(--color-line);
   padding: 1.2em;
   margin: 1.5em 0;
   overflow-x: auto;
   max-width: 100%;
+}
+
+pre .copy-btn {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  background: var(--color-background);
+  border: 1px solid var(--color-line);
+  border-radius: 0.3em;
+  padding: 0.2em 0.5em;
+  font-size: 0.75em;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: var(--color-text);
+}
+
+pre:hover .copy-btn {
+  opacity: 0.7;
+}
+
+pre .copy-btn:hover {
+  opacity: 1;
 }
 
 code {
