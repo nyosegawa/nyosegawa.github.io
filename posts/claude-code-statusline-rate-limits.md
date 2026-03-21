@@ -51,7 +51,13 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 
 ## 設定方法
 
-`~/.claude/settings.json`に`statusLine`を追加するだけです。
+Claude Codeを実行し、以下のように指示するだけで導入できます。
+
+```
+https://nyosegawa.com/posts/claude-code-statusline-rate-limits/ これを入れたい. Pattern1
+```
+
+以下は手動で設定する場合の手順です。`~/.claude/settings.json`に`statusLine`を追加するだけです。
 
 **macOS / Linux:**
 
