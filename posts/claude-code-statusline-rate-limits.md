@@ -53,6 +53,8 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 
 `~/.claude/settings.json`に`statusLine`を追加するだけです。
 
+**macOS / Linux:**
+
 ```json
 {
   "statusLine": {
@@ -63,6 +65,21 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 ```
 
 スクリプトは`chmod +x`で実行権限をつけておく必要があります。
+
+**Windows:**
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "python ~/.claude/statusline.py"
+  }
+}
+```
+
+Windowsでは`chmod +x`は不要です。代わりに`python`コマンド経由でスクリプトを実行します。[Claude Codeは内部的にGit Bashを使ってコマンドを実行する](https://code.claude.com/docs/en/setup)ため、パスは`~`で指定できます。
+
+> **Note:** Pythonは別途インストールが必要です。[python.org](https://www.python.org/downloads/)からインストールし、PATHに追加してください。また、ANSIエスケープシーケンス（色表示）を正しく表示するには**Windows Terminal**の使用を推奨します。
 
 ## 5つのビジュアルパターン
 
@@ -123,7 +140,10 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 
 ## Appendix: スクリプト全文
 
-すべてPythonスクリプトです。`~/.claude/statusline.py`として保存し、`chmod +x`で実行権限を付与してください。
+すべてPythonスクリプトです。
+
+- **macOS / Linux:** `~/.claude/statusline.py`として保存し、`chmod +x`で実行権限を付与してください。
+- **Windows:** `~/.claude/statusline.py`として保存してください（実行権限の付与は不要です）。
 
 ### Pattern 1: Minimal Dots
 
@@ -131,6 +151,8 @@ Claude Codeのステータスラインはシンプルな仕組みで動いてい
 #!/usr/bin/env python3
 """Pattern 1: Minimal dots - colored circles with numbers only"""
 import json, sys
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 data = json.load(sys.stdin)
 
@@ -174,6 +196,8 @@ print(f'  {DIM}·{R}  '.join(parts), end='')
 #!/usr/bin/env python3
 """Pattern 2: Sparkline gauge - vertical block characters"""
 import json, sys
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 data = json.load(sys.stdin)
 
@@ -233,6 +257,8 @@ print(f' {DIM}│{R} '.join(parts), end='')
 #!/usr/bin/env python3
 """Pattern 3: Ring meter - pie-like circle segments"""
 import json, sys
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 data = json.load(sys.stdin)
 
@@ -282,6 +308,8 @@ print('  '.join(parts), end='')
 #!/usr/bin/env python3
 """Pattern 4: Fine-grained progress bar with true color gradient"""
 import json, sys
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 data = json.load(sys.stdin)
 
@@ -336,6 +364,8 @@ print(f'{DIM}│{R}'.join(f' {p} ' for p in parts), end='')
 #!/usr/bin/env python3
 """Pattern 5: Braille dots - dotted progress bar using braille characters"""
 import json, sys
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 data = json.load(sys.stdin)
 
