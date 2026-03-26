@@ -128,6 +128,27 @@ site.process([".html"], (pages) => {
       }
     }
 
+    // Add copy page button to post pages
+    if (isPost) {
+      const postTitle = doc.querySelector("h1.post-title");
+      if (postTitle) {
+        const slug = url?.replace(/^\/posts\//, "").replace(/\/$/, "");
+        const mdUrl = `/posts/${slug}.md`;
+
+        const wrapper = doc.createElement("div");
+        wrapper.className = "post-title-row";
+        postTitle.before(wrapper);
+        wrapper.appendChild(postTitle);
+
+        const btn = doc.createElement("button");
+        btn.className = "copy-page-btn";
+        btn.setAttribute("data-md-url", mdUrl);
+        btn.setAttribute("title", "記事をMarkdownでコピー");
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        wrapper.appendChild(btn);
+      }
+    }
+
     // Add copy button to code blocks
     doc.querySelectorAll("pre").forEach((pre) => {
       const btn = doc.createElement("button");
@@ -142,6 +163,13 @@ site.process([".html"], (pages) => {
       const script = doc.createElement("script");
       script.textContent = `document.addEventListener("click",function(e){var b=e.target;if(!b.classList.contains("copy-btn"))return;var code=b.parentElement.querySelector("code");if(!code)return;navigator.clipboard.writeText(code.textContent).then(function(){b.textContent="Copied!";setTimeout(function(){b.textContent="Copy"},1500)})})`;
       body.append(script);
+    }
+
+    // Inject copy page script for post pages
+    if (body && doc.querySelector(".copy-page-btn")) {
+      const cpScript = doc.createElement("script");
+      cpScript.textContent = `document.addEventListener("click",function(e){var b=e.target.closest(".copy-page-btn");if(!b)return;e.preventDefault();fetch(b.getAttribute("data-md-url")).then(function(r){return r.text()}).then(function(t){return navigator.clipboard.writeText(t.replace(/^---[\\s\\S]*?---\\n*/,""))}).then(function(){b.classList.add("copied");setTimeout(function(){b.classList.remove("copied")},1500)})})`;
+      body.append(cpScript);
     }
 
     // Add og:image dimensions and twitter:image
@@ -163,6 +191,15 @@ site.process([".html"], (pages) => {
       if (imageUrl && !head.querySelector("meta[name='twitter:image']")) {
         addMeta("name", "twitter:image", imageUrl);
       }
+    }
+  }
+});
+
+// Copy raw markdown files to output for direct access
+site.addEventListener("afterBuild", async () => {
+  for await (const entry of Deno.readDir("posts")) {
+    if (entry.isFile && entry.name.endsWith(".md")) {
+      await Deno.copyFile(`posts/${entry.name}`, `_site/posts/${entry.name}`);
     }
   }
 });
