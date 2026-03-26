@@ -168,7 +168,7 @@ site.process([".html"], (pages) => {
     // Inject copy page script for post pages
     if (body && doc.querySelector(".copy-page-btn")) {
       const cpScript = doc.createElement("script");
-      cpScript.textContent = `document.addEventListener("click",function(e){var b=e.target.closest(".copy-page-btn");if(!b)return;e.preventDefault();fetch(b.getAttribute("data-md-url")).then(function(r){return r.text()}).then(function(t){return navigator.clipboard.writeText(t.replace(/^---[\\s\\S]*?---\\n*/,""))}).then(function(){b.classList.add("copied");setTimeout(function(){b.classList.remove("copied")},1500)})})`;
+      cpScript.textContent = `document.addEventListener("click",function(e){var b=e.target.closest(".copy-page-btn");if(!b)return;e.preventDefault();fetch(b.getAttribute("data-md-url")).then(function(r){return r.text()}).then(function(t){return navigator.clipboard.writeText(t)}).then(function(){b.classList.add("copied");setTimeout(function(){b.classList.remove("copied")},1500)})})`;
       body.append(cpScript);
     }
 
@@ -195,11 +195,21 @@ site.process([".html"], (pages) => {
   }
 });
 
-// Copy raw markdown files to output for direct access
+// Copy raw markdown files to output with absolute URLs
 site.addEventListener("afterBuild", async () => {
+  const baseUrl = "https://nyosegawa.com";
   for await (const entry of Deno.readDir("posts")) {
     if (entry.isFile && entry.name.endsWith(".md")) {
-      await Deno.copyFile(`posts/${entry.name}`, `_site/posts/${entry.name}`);
+      let content = await Deno.readTextFile(`posts/${entry.name}`);
+      const slug = entry.name.replace(/\.md$/, "");
+
+      // Add url to frontmatter
+      content = content.replace(/^---\n/, `---\nurl: ${baseUrl}/posts/${slug}/\n`);
+
+      // Convert relative paths to absolute URLs in markdown links/images
+      content = content.replace(/\]\(\//g, `](${baseUrl}/`);
+
+      await Deno.writeTextFile(`_site/posts/${entry.name}`, content);
     }
   }
 });
