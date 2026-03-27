@@ -91,6 +91,19 @@ site.process([".html"], (pages) => {
       title.textContent = title.textContent.replace("Portfolio - ", "");
     }
 
+    // Move "お仕事募集のお知らせ" link to first position in navbar
+    const navbarLinks = doc.querySelector(".navbar-links");
+    if (navbarLinks) {
+      const oshigotoLink = navbarLinks.querySelector("a[href='/posts/oshigoto-wanted/']");
+      if (oshigotoLink) {
+        const li = oshigotoLink.parentElement;
+        if (li && navbarLinks.firstElementChild) {
+          navbarLinks.insertBefore(li, navbarLinks.firstElementChild);
+        }
+        oshigotoLink.classList.add("nav-oshigoto");
+      }
+    }
+
     // Open external links in new tab
     doc.querySelectorAll("a[href^='http']").forEach((link) => {
       const href = link.getAttribute("href");

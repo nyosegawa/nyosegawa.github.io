@@ -6,6 +6,9 @@ home:
     このブログ記事は主にCoding Agentで執筆されています。
 
 menu_links:
+  - text: お仕事募集のお知らせ
+    href: /posts/oshigoto-wanted/
+    target: _blank
   - text: Blog
     href: /blog/
 

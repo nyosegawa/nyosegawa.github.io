@@ -122,6 +122,14 @@ a:hover {
   color: var(--color-base);
 }
 
+.nav-oshigoto {
+  color: #eb5a73 !important;
+}
+
+[data-theme="dark"] .nav-oshigoto {
+  color: #fb8ca0 !important;
+}
+
 /* ====== Headings ====== */
 
 h1, h2, h3, h4, h5, h6 {
