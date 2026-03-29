@@ -988,27 +988,50 @@ Claude Codeは「作業場型」です。開発者の環境に直接入り、フ
 | [App Serverプロトコル](https://openai.com/index/unlocking-the-codex-harness/) | 双方向JSON-RPCで全クライアント表面（CLI・VSCode・Web）を統一 | どのクライアントからでも同一のAGENTS.md・サンドボックス設定が適用される |
 | [リアルタイムステアリング](https://developers.openai.com/codex/app-server/) | `turn/steer`メソッドで実行中のエージェントに追加指示を送信 | 長時間タスクの途中でハーネス指示を補正でき、タスク再実行コストを削減 |
 | [Agents SDK統合](https://developers.openai.com/codex/guides/agents-sdk/) | `codex mcp-server`でCodex CLIをMCPサーバーとして公開 | 外部オーケストレーターからCodexタスクをプログラマティックに呼び出せる |
-| [`notify`フック](https://developers.openai.com/codex/config-advanced/) | タスク完了時に外部コマンドを実行（JSONペイロード） | 現時点で唯一のイベントフック。`agent-turn-complete`イベントのみ対応 |
+| [Hooksシステム(実験的)](https://developers.openai.com/codex/hooks) | SessionStart/PreToolUse/PostToolUse/UserPromptSubmit/Stopの5イベントフック | [rust-v0.117.0](https://github.com/openai/codex/releases/tag/rust-v0.117.0)(2026-03-26)で導入。Pre/PostToolUseはBashのみ対応。`hooks.json`で設定 |
+| [`notify`フック(非推奨予定)](https://developers.openai.com/codex/config-advanced/) | タスク完了時に外部コマンドを実行（JSONペイロード） | Hooks導入に伴い将来的に非推奨予定 |
 
-Codex には Claude Code の PreToolUse/PostToolUse のような「ツール実行の前後に介入する」仕組みはまだ存在しません。唯一のフック的機能が[`notify`](https://developers.openai.com/codex/config-advanced/)で、`~/.codex/config.toml`に以下のように設定します。
+2026年3月26日リリースの[rust-v0.117.0](https://github.com/openai/codex/releases/tag/rust-v0.117.0)で、Codexに実験的な[Hooksシステム](https://developers.openai.com/codex/hooks)が導入されました。Claude Code相当の5つのライフサイクルイベント(SessionStart、PreToolUse、PostToolUse、UserPromptSubmit、Stop)に対応しています。`~/.codex/hooks.json`またはリポジトリの`<repo>/.codex/hooks.json`に設定を記述し、`config.toml`でフィーチャーフラグを有効化します。
 
 ```toml
-notify = ["python3", "/path/to/notify.py"]
+[features]
+codex_hooks = true
 ```
 
-`notify`は`agent-turn-complete`イベント発火時に外部コマンドを呼び出し、`type`、`thread-id`、`input-messages`、`last-assistant-message`等を含むJSONペイロードを渡します。デスクトップ通知やSlack webhook には十分ですが、ツール実行前にリンターを走らせるといった品質ゲートには使えません。
+設定ファイルの構造はClaude Codeと酷似しています。マッチャーによるフィルタリング、`hookSpecificOutput.additionalContext`によるフィードバック注入、PreToolUseでの`permissionDecision`(allow/deny/ask)によるブロッキングが可能です。
 
-[GitHub Discussion #2150](https://github.com/openai/codex/discussions/2150)では83人以上がClaude Code相当のHooksシステムをリクエストしており、[Issue #2109](https://github.com/openai/codex/issues/2109)には475以上のupvoteが付いています。OpenAIは[Issue #12524](https://github.com/openai/codex/issues/12524)で「より汎用的なイベントフック機能を開発中で、現行の`notify`は将来的に非推奨にする予定」と回答しています。コミュニティからは包括的なHooksシステムの[PR](https://github.com/openai/codex/pull/9796)も提出されましたが、「現在feature contributionは受け付けていない」としてクローズされました。
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .codex/hooks/pre_tool_use_policy.py",
+            "statusMessage": "Bash コマンドをチェック中"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
-ではCodexユーザーはどう対処しているのでしょうか。現状のアプローチは「予防型」です。AGENTS.mdにルールを明文化し、プリコミットフックとリンターでインフラレベルで品質を強制します。Claude Codeのように「ファイル編集のたびにリンターが走る」リアクティブなループは作れないため、タスク完了後にまとめてリント実行 → 違反があればCodexに再度修正タスクを投げる、というバッチ的なワークフローになります。[codex-subagents-mcp](https://github.com/leonardsellem/codex-subagents-mcp)のようにMCPサーバー経由で専門サブエージェント(レビュアー、デバッガー、セキュリティ監査)をspawnするアプローチも試みられていますが、これもnotifyフックではなくMCPのdelegate呼び出しを使ったもので、ツール実行前後への介入とは異なります。
+ただし現時点では重要な制約があります。PreToolUse/PostToolUseの対象ツールがBashのみです([スキーマ](https://github.com/openai/codex/tree/main/codex-rs/hooks/schema/generated)で`tool_name`が`const: "Bash"`として定義されています)。Claude CodeではWrite/Edit/MultiEdit等のファイル操作ツールにもフックが掛けられますが、Codexではそうはいきません。もっとも、Codexのアーキテクチャではファイル操作をBash経由で行うため、BashフックだけでもClaude Codeの`matcher: "Write|Edit|MultiEdit"`と実質的に同等のカバレッジが得られます。Bashコマンドの内容をパースして対象ファイルを特定し、リンターを走らせるといった品質ゲートが構築可能です。
 
-この差がハーネスエンジニアリングの観点では決定的です。次のClaude Code固有の機能表と見比べると、その差が明確に見えてきます。
+Windows対応が一時的に無効化されている点にも注意が必要です。従来の`notify`フックは将来的に非推奨予定とされています。
+
+以前[GitHub Discussion #2150](https://github.com/openai/codex/discussions/2150)では83人以上がClaude Code相当のHooksシステムをリクエストしており、[Issue #2109](https://github.com/openai/codex/issues/2109)には475以上のupvoteが付いていました。このリクエストがついに実現した形です。
+
+さて、Codex HooksはまだBash限定の実験的機能ですが、両プラットフォーム間のハーネス機能差は急速に縮まりつつあります。以下のClaude Code固有の機能表と見比べると、現時点での差が見えてきます。
 
 ### Claude Code固有のハーネス機能
 
 | 機能 | 説明 | ハーネスへの影響 |
 |------|------|----------------|
-| [Hooksシステム](https://code.claude.com/docs/en/hooks) | PreToolUse/PostToolUse/Stop/PreCompact等のライフサイクルフック | 最大の差別化要因。決定論的品質ゲートを毎回のツール実行で強制 |
+| [Hooksシステム](https://code.claude.com/docs/en/hooks) | PreToolUse/PostToolUse/Stop/PreCompact等のライフサイクルフック | CodexのHooks(実験的・Bashのみ)と異なり全ツール(Write/Edit/MultiEdit/Bash等)に対応し安定版として提供 |
 | PreToolUseブロッキング | ツール実行前にアクションを決定論的にブロック | `.env`編集禁止、`rm -rf`防止等のセキュリティポリシーを機械的に強制 |
 | PostToolUse品質ループ | ファイル編集のたびにリンター→JSON additionalContext注入→自己修正 | 「ほぼ毎回」と「例外なく毎回」の差を埋める |
 | PreCompactフック | [コンパクション前の重要情報保護](https://institute.sfeir.com/en/claude-code/claude-code-context-management/optimization/) | 長時間セッションでの情報損失を軽減 |
@@ -1018,7 +1041,7 @@ notify = ["python3", "/path/to/notify.py"]
 
 ### 両方で可能だがアプローチが異なるもの
 
-リンター統合: Codexはタスク完了時にバッチでリント実行。Claude Codeはsettings-based PostToolUse Hookでファイル編集のたびにリント→docs準拠JSONの`additionalContext`として注入→自己修正ループ。Claude Codeの方が粒度が細かいです(ファイル単位 vs タスク単位)。
+リンター統合: 両者ともPostToolUse Hookでツール実行のたびにリント→`additionalContext`として注入→自己修正ループが可能です。ただしCodexのHooksは実験的でBashのみ対応です(Codexのファイル操作はBash経由のためカバー自体は可能)。Claude Codeの方がWrite/Edit/MultiEditへの直接マッチで粒度が細かいです。
 
 E2Eテスト: テスト生成にはClaude Code(フィードバックループで品質向上)、テスト並列実行にはCodex(サンドボックスでの非同期実行)が適します。
 
@@ -1043,7 +1066,7 @@ E2Eテスト: テスト生成にはClaude Code(フィードバックループで
 
 | 最優先事項 | 推奨 | 理由 |
 |-----------|------|------|
-| 品質 | Claude Code主軸 | Hooksによる決定論的品質ゲートは他に代替手段がない |
+| 品質 | Claude Code主軸(Codexも追従中) | Claude CodeのHooksは全ツール対応の安定版。CodexのHooksは実験的だがBash経由で同等の品質ゲートが構築可能 |
 | スループット | Codex主軸 | 非同期サンドボックスでの並列実行は他に代替手段がない |
 | 両方 | Claude Codeでハーネス構築 → Codexでスケール実行 | ハーネスの品質がスケール時の信頼性を決定する |
 
@@ -1098,6 +1121,10 @@ E2Eテスト: テスト生成にはClaude Code(フィードバックループで
 - フィードバックは速ければ速いほど良い。PostToolUse Hook(ms) > プリコミット(s) > CI(min) > 人間レビュー(h)の順で可能な限り速いレイヤーにチェックを移動させる
 - すべてを一度に導入する必要はない。MVHから始めてエージェントのミスが発生するたびにハーネスを強化していく
 
+## 2026-03-29 修正
+
+Codexに実験的な[Hooksシステム](https://developers.openai.com/codex/hooks)が[rust-v0.117.0](https://github.com/openai/codex/releases/tag/rust-v0.117.0)(2026-03-26リリース)で導入されたため、第7章「Codex vs Claude Code」のCodex固有機能テーブル、Hooks未対応の記述、リンター統合の比較、意思決定フレームワークを更新しました。CodexのHooksはClaude Codeと同じ5イベント(SessionStart/PreToolUse/PostToolUse/UserPromptSubmit/Stop)に対応しますが、Pre/PostToolUseの対象がBashツールのみ(スキーマで`const: "Bash"`)である点が主な差異です。Codexはファイル操作をBash経由で行うアーキテクチャのため実質的なカバレッジは確保できますが、Claude CodeのようにWrite/Edit/MultiEditに直接マッチさせることはできません。
+
 ## 2026-03-11 修正
 
 公開後のClaude Code Hooks追試を踏まえて、Hooks章の記述を一部修正しました。この記事で扱うHooks例は`.claude/settings.json`または`.claude/settings.local.json`に置くsettings-based hooksを前提とします。また、PostToolUseでフィードバックをClaudeに戻す方法は、通常stdoutではなく`hookSpecificOutput.additionalContext`を返すdocs準拠JSONに修正しました。frontmatter hooksやplugin / marketplaceの挙動差は別途検証対象として切り分けています。追試に使った再現実験リポジトリは <https://github.com/nyosegawa/claude-hook-experiment> です。
@@ -1124,6 +1151,8 @@ E2Eテスト: テスト生成にはClaude Code(フィードバックループで
 - [Codex Automations](https://developers.openai.com/codex/app/automations/) (OpenAI)
 - [Codex App Server](https://openai.com/index/unlocking-the-codex-harness/) (OpenAI)
 - [Codex Agents SDK](https://developers.openai.com/codex/guides/agents-sdk/) (OpenAI)
+- [Codex Hooks](https://developers.openai.com/codex/hooks) (OpenAI)
+- [Codex Hooks Schema](https://github.com/openai/codex/tree/main/codex-rs/hooks/schema/generated) (OpenAI)
 
 ### リンターツール
 - [Oxlint 1.0](https://voidzero.dev/posts/announcing-oxlint-1-stable) (VoidZero)
