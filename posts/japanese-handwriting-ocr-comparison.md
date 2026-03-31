@@ -69,7 +69,7 @@ OSSモデルは[Modal](https://modal.com)というサーバーレスGPUプラッ
 | Modal (T4) | [GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) | MIT | 0.9B |
 | Modal (CPU) | [NDLOCR-Lite](https://github.com/ndl-lab/ndlocr-lite) | CC-BY-4.0 | 国立国会図書館 |
 | Modal (A10G) | [NDLOCR v2](https://github.com/ndl-lab/ndlocr_cli) | CC-BY-4.0 | 国立国会図書館 |
-| Modal (L4) | [Sarashina2.2-OCR](https://huggingface.co/sbintuitions/sarashina2.2-ocr) | — | 3B, 日本語特化 |
+| Modal (L4) | [Sarashina2.2-OCR](https://huggingface.co/sbintuitions/sarashina2.2-ocr) | MIT | 3B, 日本語活字特化 |
 
 このうちDeepSeek-OCR、GOT-OCR 2.0は日本語非対応、Nanonets-OCR-sは公式が手書き未学習と明言しているモデルです。olmOCR-2も公式には英語PDFフォーカスで日本語サポートを明記していません。OCRベンチマークで名前を見かけることが多いので一応全部入れてみました。無茶振りした結果がどうなったかは後述します。
 
