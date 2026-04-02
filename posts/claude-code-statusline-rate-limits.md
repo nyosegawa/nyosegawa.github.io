@@ -4,6 +4,7 @@ description: "Claude Code v2.1.80で追加されたrate_limitsフィールドを
 date: 2026-03-20
 tags: [Claude Code, statusline, tips]
 author: 逆瀬川ちゃん
+oldUrl: /posts/claude-code-statusline/
 ---
 
 こんにちは！逆瀬川 ([@gyakuse](https://x.com/gyakuse)) です！

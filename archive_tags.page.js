@@ -28,6 +28,8 @@ export default function* ({ search, i18n, paginate }) {
         title: `${i18n.search.by_tag}  "${tag}"`,
         type: "tag",
         tag,
+        unlisted: true,
+        metas: { robots: "noindex, follow" },
       };
     }
   }
@@ -47,6 +49,8 @@ export default function* ({ search, i18n, paginate }) {
         title: `${i18n.search.by_author} ${author}`,
         type: "author",
         author,
+        unlisted: true,
+        metas: { robots: "noindex, follow" },
       };
     }
   }

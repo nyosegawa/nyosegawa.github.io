@@ -1,6 +1,7 @@
 import lume from "lume/mod.ts";
 import blog from "blog/mod.ts";
 import katex from "lume/plugins/katex.ts";
+import redirects from "lume/plugins/redirects.ts";
 
 const site = lume({
   location: new URL("https://nyosegawa.com"),
@@ -14,9 +15,12 @@ site.use(blog({
     },
   },
 }));
+site.use(redirects({ output: "html" }));
 
 // Override theme's archive_result.page.js to fix empty tag/author bug
 site.ignore("archive_result.page.js");
+site.ignore("README.md");
+site.ignore("draft");
 
 // Theme's index.vto is overridden by our local index.vto (portfolio page)
 
@@ -225,6 +229,16 @@ site.addEventListener("afterBuild", async () => {
       await Deno.writeTextFile(`_site/posts/${entry.name}`, content);
     }
   }
+
+  // Write custom robots.txt (overrides sitemap plugin's default)
+  const robotsTxt = `User-agent: *
+Disallow: /pagefind/
+Disallow: /cdn-cgi/
+Disallow: /*.md$
+
+Sitemap: ${baseUrl}/sitemap.xml
+`;
+  await Deno.writeTextFile("_site/robots.txt", robotsTxt);
 });
 
 export default site;
