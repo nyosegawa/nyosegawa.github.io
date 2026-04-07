@@ -1,5 +1,5 @@
 ---
-title: "Claude Codeの文字化け問題の簡易的対応方法"
+title: "【解決済】Claude Codeの文字化け問題の簡易的対応方法"
 description: "Claude CodeのWrite/Editで日本語が文字化け(U+FFFD)する問題に対して、hooksで暫定的に防ぐ方法を紹介します"
 date: 2026-04-07
 tags: [Claude Code, Unicode, Claude Code Hooks, 文字化け]
@@ -9,6 +9,8 @@ author: 逆瀬川ちゃん
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！
 
 今日はClaude Codeの最新バージョンで日本語を書いていると発生する文字化け問題と、hooksを使った簡易的な対応方法についてまとめていきたいと思います。
+
+**2026-04-08 追記**: Claude Code v2.1.94で本問題が修正されました🎉 SSEストリーミングでチャンク境界がUTF-8シーケンスを分断した際にCJK等のマルチバイト文字がU+FFFDに化ける問題が、stream-jsonの入出力レベルで修正されています。[Changelog](https://code.claude.com/docs/en/changelog#2-1-94)を参照してください。以下のhook対策はもう不要ですが、記録として残しておきます。
 
 **2026-04-07 追記**: 当初`PostToolUse`（書き込み後に検出）で紹介していましたが、`PreToolUse`（書き込み前に阻止）に変更しました。PostToolUseだとファイルへの書き込み自体は行われてしまうため、PreToolUseでtool inputの段階でU+FFFDを検出して書き込みを阻止する方式のほうが確実です。
 
