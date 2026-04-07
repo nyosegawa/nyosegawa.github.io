@@ -2,7 +2,7 @@
 title: "Claude Codeの文字化け問題の簡易的対応方法"
 description: "Claude CodeのWrite/Editで日本語が文字化け(U+FFFD)する問題に対して、hooksで暫定的に防ぐ方法を紹介します"
 date: 2026-04-07
-tags: [Claude Code, Unicode, hooks, 文字化け]
+tags: [Claude Code, Unicode, Claude Code Hooks, 文字化け]
 author: 逆瀬川ちゃん
 ---
 
