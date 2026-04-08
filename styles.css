@@ -764,6 +764,20 @@ a.portfolio-card-link:hover h3 {
   color: var(--color-link);
 }
 
+.portfolio-oshigoto {
+  text-align: center;
+  margin-bottom: 2em;
+}
+
+.portfolio-oshigoto a {
+  font-weight: 700;
+  color: #eb5a73;
+}
+
+[data-theme="dark"] .portfolio-oshigoto a {
+  color: #fb8ca0;
+}
+
 .portfolio-more {
   margin-top: 1em;
 }
