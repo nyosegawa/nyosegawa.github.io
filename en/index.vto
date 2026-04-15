@@ -3,6 +3,7 @@ layout: layouts/base.vto
 title: Portfolio
 bodyClass: body-portfolio
 image: /og/portfolio.jpg
+url: /en/
 ---
 
 <section class="portfolio-hero">
@@ -25,19 +26,17 @@ image: /og/portfolio.jpg
   </div>
 </section>
 
-<p class="portfolio-oshigoto"><a href="/posts/oshigoto-wanted/">📩 お仕事を依頼したい方はこちら</a></p>
-
 <section class="portfolio-section">
   <h2>Latest Posts</h2>
   <ul class="portfolio-posts">
-    {{ for post of search.pages("type=post lang=ja", "date=desc", 5) }}
+    {{ for post of search.pages("type=post lang=en", "date=desc", 5) }}
     <li>
-      <a href="{{ post.url }}" target="_blank" rel="noopener noreferrer">{{ post.title }}</a>
+      <a href="{{ post.url }}">{{ post.title }}</a>
       <time>{{ post.date |> date("yyyy-MM-dd") }}</time>
     </li>
     {{ /for }}
   </ul>
-  <p class="portfolio-more"><a href="/blog/">→ すべての記事を見る</a></p>
+  <p class="portfolio-more"><a href="/en/blog/">→ See all posts</a></p>
 </section>
 
 <section class="portfolio-section">

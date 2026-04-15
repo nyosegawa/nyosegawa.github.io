@@ -35,8 +35,11 @@ ICON_PATH = PROJECT_DIR / "icon.png"
 
 # --- Constants ---
 WIDTH, HEIGHT = 1200, 630
-BLOG_NAME = "逆瀬川ちゃんのブログ"
-AUTHOR = "逆瀬川ちゃん"
+
+LANG_LABELS = {
+    "ja": {"author": "逆瀬川ちゃん", "blog": "逆瀬川ちゃんのブログ"},
+    "en": {"author": "Sakasegawa-chan", "blog": "Sakasegawa's Blog"},
+}
 
 # --- Colors ---
 BG_TOP = (235, 244, 252)
@@ -71,7 +74,27 @@ def parse_frontmatter(filepath: Path) -> dict:
 
 
 def wrap_title(title: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[str]:
-    """Wrap title text to fit within max_width pixels."""
+    """Wrap title text to fit within max_width pixels.
+
+    Word-aware when the title contains spaces (typical for English),
+    character-aware otherwise (typical for Japanese).
+    """
+    if " " in title:
+        words = title.split(" ")
+        lines: list[str] = []
+        current = ""
+        for word in words:
+            candidate = (current + " " + word).strip() if current else word
+            bbox = font.getbbox(candidate)
+            if bbox[2] - bbox[0] > max_width and current:
+                lines.append(current)
+                current = word
+            else:
+                current = candidate
+        if current:
+            lines.append(current)
+        return lines[:4]
+
     lines = []
     current = ""
     for char in title:
@@ -87,7 +110,7 @@ def wrap_title(title: str, font: ImageFont.FreeTypeFont, max_width: int) -> list
     return lines[:4]
 
 
-def generate_card(title: str, tags: list[str], output_path: Path):
+def generate_card(title: str, tags: list[str], output_path: Path, lang: str = "ja"):
     """Generate a single OG card image with Soft Blue design.
 
     Renders at 2x resolution then downscales for smooth anti-aliasing.
@@ -166,15 +189,18 @@ def generate_card(title: str, tags: list[str], output_path: Path):
             pass
 
     # Author name + blog name (right of avatar, stacked vertically)
+    labels = LANG_LABELS.get(lang, LANG_LABELS["ja"])
+    author_text = labels["author"]
+    blog_text = labels["blog"]
     text_x = author_x + avatar_size + 20 * S
-    author_bbox = font_author.getbbox(AUTHOR)
+    author_bbox = font_author.getbbox(author_text)
     author_h = author_bbox[3] - author_bbox[1]
-    blog_bbox = font_blog.getbbox(BLOG_NAME)
+    blog_bbox = font_blog.getbbox(blog_text)
     blog_h = blog_bbox[3] - blog_bbox[1]
     total_text_h = author_h + 8 * S + blog_h
     text_top_y = author_y + (avatar_size - total_text_h) // 2
-    draw.text((text_x, text_top_y), AUTHOR, font=font_author, fill=TEXT_AUTHOR)
-    draw.text((text_x, text_top_y + author_h + 8 * S), BLOG_NAME, font=font_blog, fill=TEXT_BLOG)
+    draw.text((text_x, text_top_y), author_text, font=font_author, fill=TEXT_AUTHOR)
+    draw.text((text_x, text_top_y + author_h + 8 * S), blog_text, font=font_blog, fill=TEXT_BLOG)
 
     # --- Title (below avatar area) ---
     title_x = cx + 60 * S
@@ -220,6 +246,34 @@ def generate_card(title: str, tags: list[str], output_path: Path):
     img.save(str(output_path), "JPEG", quality=85, optimize=True)
 
 
+def process_directory(posts_dir: Path, og_dir: Path, lang: str, force: bool) -> tuple[int, int]:
+    """Generate OG cards for every .md file in posts_dir, writing to og_dir."""
+    if not posts_dir.exists():
+        return (0, 0)
+
+    og_dir.mkdir(parents=True, exist_ok=True)
+
+    posts = sorted(posts_dir.glob("*.md"))
+    generated = 0
+    for post_path in posts:
+        slug = post_path.stem
+        output_path = og_dir / f"{slug}.jpg"
+
+        if not force and output_path.exists() and output_path.stat().st_mtime > post_path.stat().st_mtime:
+            print(f"  skip (up to date) [{lang}]: {slug}")
+            continue
+
+        fm = parse_frontmatter(post_path)
+        title = fm.get("title", slug)
+        tags = fm.get("tags", [])
+
+        print(f"  generating [{lang}]: {slug}")
+        generate_card(title, tags, output_path, lang=lang)
+        generated += 1
+
+    return (generated, len(posts))
+
+
 def main():
     force = "--force" in sys.argv
 
@@ -227,31 +281,14 @@ def main():
         print(f"posts/ directory not found at {POSTS_DIR}")
         sys.exit(1)
 
-    OG_DIR.mkdir(exist_ok=True)
+    ja_gen, ja_total = process_directory(POSTS_DIR, OG_DIR, "ja", force)
+    en_gen, en_total = process_directory(
+        PROJECT_DIR / "en" / "posts", OG_DIR / "en", "en", force,
+    )
 
-    posts = sorted(POSTS_DIR.glob("*.md"))
-    if not posts:
-        print("No posts found.")
-        return
-
-    generated = 0
-    for post_path in posts:
-        slug = post_path.stem
-        output_path = OG_DIR / f"{slug}.jpg"
-
-        if not force and output_path.exists() and output_path.stat().st_mtime > post_path.stat().st_mtime:
-            print(f"  skip (up to date): {slug}")
-            continue
-
-        fm = parse_frontmatter(post_path)
-        title = fm.get("title", slug)
-        tags = fm.get("tags", [])
-
-        print(f"  generating: {slug}")
-        generate_card(title, tags, output_path)
-        generated += 1
-
-    print(f"Done. {generated} image(s) generated, {len(posts) - generated} skipped.")
+    total = ja_total + en_total
+    generated = ja_gen + en_gen
+    print(f"Done. {generated} image(s) generated, {total - generated} skipped.")
 
 
 if __name__ == "__main__":

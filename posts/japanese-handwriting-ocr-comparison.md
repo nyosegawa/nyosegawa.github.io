@@ -4,6 +4,7 @@ description: "手書きメモの電子化がつらいので、Claude, Gemini, GP
 date: 2026-03-17
 tags: [OCR, AI, Modal, 手書き, 評価]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

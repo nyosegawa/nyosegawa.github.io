@@ -4,6 +4,7 @@ description: "全Notion利用者のための、Coding Agentに対応したCLIを
 date: 2026-03-19
 tags: [Notion, MCP, CLI, Agent, Claude Code]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

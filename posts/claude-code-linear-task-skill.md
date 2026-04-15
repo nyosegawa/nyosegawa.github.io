@@ -4,6 +4,7 @@ description: "Claude Code SkillとLinear MCPを組み合わせて、コーディ
 date: 2026-02-12T18:00:00
 tags: [Claude Code, MCP, Linear, Skills, Task Management]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

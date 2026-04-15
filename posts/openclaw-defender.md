@@ -4,6 +4,7 @@ description: "友人のDiscord botがプロンプトインジェクションでI
 date: 2026-02-15
 tags: [セキュリティ, プロンプトインジェクション, TypeScript, OpenClaw, Cerebras]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川 ([@gyakuse](https://x.com/gyakuse)) です！

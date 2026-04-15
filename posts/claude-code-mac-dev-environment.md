@@ -4,6 +4,7 @@ description: "Claude Code専用の4ペインtmuxレイアウト、Ghostty + Star
 date: 2026-02-14
 tags: [Claude Code, tmux, Ghostty, Starship, Discord, Hooks]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

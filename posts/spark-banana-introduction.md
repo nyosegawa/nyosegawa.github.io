@@ -4,6 +4,7 @@ description: "Codex Spark (gpt-5.3-codex-spark) とnanobanana (Gemini 3) を組�
 date: 2026-02-27
 tags: [spark-banana, Codex Spark, nanobanana, Gemini, UI, React]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

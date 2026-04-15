@@ -4,6 +4,7 @@ description: "Notion/Linear/コードベースに散らばった情報をClaude 
 date: 2026-02-12T14:00:00
 tags: [Claude Code, MCP, Plugin, Linear, Notion]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川 ([@gyakuse](https://x.com/gyakuse)) です！

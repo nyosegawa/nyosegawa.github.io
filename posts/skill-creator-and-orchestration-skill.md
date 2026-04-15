@@ -4,6 +4,7 @@ description: "Anthropic公式のskill-creatorを分析し、Agent Skill設計の
 date: 2026-03-04
 tags: [Agent Skills, skill-creator, orchestration, claude, anthropic]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 ## はじめに

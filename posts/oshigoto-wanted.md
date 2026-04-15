@@ -4,6 +4,7 @@ description: "2026年4月以降の業務委託でのお仕事を募集します"
 date: 2026-03-27
 tags: [お仕事募集]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

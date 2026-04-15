@@ -30,15 +30,16 @@ site.copy("img");
 site.copy("CNAME");
 site.copy("icon.png");
 
-// Auto-set OG image for posts based on slug
+// Auto-set OG image for posts based on slug. JA uses /og/{slug}.jpg, EN uses /og/en/{slug}.jpg
 site.preprocess([".md"], (pages) => {
   for (const page of pages) {
-    if (page.src.path.startsWith("/posts/") && !page.data.image) {
-      // Extract slug from path: "/posts/hello-lume" -> "hello-lume"
+    if (page.data.image) continue;
+    if (page.src.path.startsWith("/posts/")) {
       const slug = page.src.path.replace(/^\/posts\//, "");
-      if (slug) {
-        page.data.image = `/og/${slug}.jpg`;
-      }
+      if (slug) page.data.image = `/og/${slug}.jpg`;
+    } else if (page.src.path.startsWith("/en/posts/")) {
+      const slug = page.src.path.replace(/^\/en\/posts\//, "");
+      if (slug) page.data.image = `/og/en/${slug}.jpg`;
     }
   }
 });
@@ -61,6 +62,22 @@ site.process([".css"], (pages) => {
 
 // Post-process HTML
 site.process([".html"], (pages) => {
+  // Collect all URLs to determine if a translated counterpart exists for each page
+  const urlSet = new Set(pages.map((p) => p.data.url).filter(Boolean));
+
+  // Compute the alt-language URL of a given URL.
+  // / ↔ /en/, /posts/foo/ ↔ /en/posts/foo/, etc.
+  const computeAltUrl = (u: string) => {
+    if (u.startsWith("/en/")) return u.slice(3);
+    if (u === "/en") return "/";
+    return "/en" + u;
+  };
+
+  const SITE_NAMES = {
+    ja: { home: "逆瀬川ちゃんのほーむぺーじ", blog: "逆瀬川ちゃんのブログ" },
+    en: { home: "Sakasegawa's Homepage", blog: "Sakasegawa's Blog" },
+  };
+
   for (const page of pages) {
     const doc = page.document;
     if (!doc) continue;
@@ -74,10 +91,16 @@ site.process([".html"], (pages) => {
     }
 
     const title = doc.querySelector("title");
-    const url = page.data.url;
-    const isBlogPage = url?.startsWith("/blog/") || url?.startsWith("/posts/") || url?.startsWith("/archive/") || url?.startsWith("/author/");
-    const homeSiteName = "逆瀬川ちゃんのほーむぺーじ";
-    const blogSiteName = "逆瀬川ちゃんのブログ";
+    const url = page.data.url as string | undefined;
+    const isEn = !!url?.startsWith("/en/") || url === "/en";
+    const lang: "ja" | "en" = isEn ? "en" : "ja";
+    const stripped = isEn ? url!.slice(3) || "/" : url || "/";
+    const isBlogPage =
+      stripped.startsWith("/blog/") ||
+      stripped.startsWith("/posts/") ||
+      stripped.startsWith("/archive/") ||
+      stripped.startsWith("/author/");
+    const { home: homeSiteName, blog: blogSiteName } = SITE_NAMES[lang];
 
     // Swap site name for blog/post pages
     if (isBlogPage) {
@@ -95,6 +118,34 @@ site.process([".html"], (pages) => {
       title.textContent = title.textContent.replace("Portfolio - ", "");
     }
 
+    // Language toggle: rewrite href based on whether alt-language counterpart exists
+    if (url) {
+      const alt = computeAltUrl(url);
+      const altExists = urlSet.has(alt);
+      const toggleHref = altExists ? alt : (isEn ? "/" : "/en/");
+      const toggle = doc.querySelector("a.lang-toggle");
+      if (toggle) {
+        toggle.setAttribute("href", toggleHref);
+      }
+
+      // hreflang relations (only when alt counterpart exists)
+      const headEl = doc.querySelector("head");
+      if (headEl && altExists) {
+        const jaUrl = isEn ? alt : url;
+        const enUrl = isEn ? url : alt;
+        const addAlt = (hreflang: string, href: string) => {
+          const link = doc.createElement("link");
+          link.setAttribute("rel", "alternate");
+          link.setAttribute("hreflang", hreflang);
+          link.setAttribute("href", `https://nyosegawa.com${href}`);
+          headEl.appendChild(link);
+        };
+        addAlt("ja", jaUrl);
+        addAlt("en", enUrl);
+        addAlt("x-default", jaUrl);
+      }
+    }
+
     // Open external links in new tab
     doc.querySelectorAll("a[href^='http']").forEach((link) => {
       const href = link.getAttribute("href");
@@ -108,7 +159,7 @@ site.process([".html"], (pages) => {
     if (!head) continue;
 
     // Fix og:title for portfolio page
-    if (url === "/") {
+    if (url === "/" || url === "/en/") {
       const ogTitle = head.querySelector("meta[property='og:title']");
       if (ogTitle) {
         ogTitle.setAttribute("content", homeSiteName);
@@ -124,7 +175,7 @@ site.process([".html"], (pages) => {
     }
 
     // Change og:type to "article" for blog posts
-    const isPost = url?.startsWith("/posts/");
+    const isPost = url?.startsWith("/posts/") || url?.startsWith("/en/posts/");
     if (isPost) {
       const ogType = head.querySelector("meta[property='og:type']");
       if (ogType) {
@@ -136,8 +187,9 @@ site.process([".html"], (pages) => {
     if (isPost) {
       const postTitle = doc.querySelector("h1.post-title");
       if (postTitle) {
-        const slug = url?.replace(/^\/posts\//, "").replace(/\/$/, "");
-        const mdUrl = `/posts/${slug}.md`;
+        const postsPrefix = isEn ? "/en/posts/" : "/posts/";
+        const slug = url?.replace(new RegExp(`^${postsPrefix}`), "").replace(/\/$/, "");
+        const mdUrl = `${postsPrefix}${slug}.md`;
 
         const wrapper = doc.createElement("div");
         wrapper.className = "post-title-row";
@@ -147,7 +199,7 @@ site.process([".html"], (pages) => {
         const btn = doc.createElement("button");
         btn.className = "copy-page-btn";
         btn.setAttribute("data-md-url", mdUrl);
-        btn.setAttribute("title", "記事をMarkdownでコピー");
+        btn.setAttribute("title", isEn ? "Copy article as Markdown" : "記事をMarkdownでコピー");
         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
         wrapper.appendChild(btn);
       }
@@ -202,20 +254,31 @@ site.process([".html"], (pages) => {
 // Copy raw markdown files to output with absolute URLs
 site.addEventListener("afterBuild", async () => {
   const baseUrl = "https://nyosegawa.com";
-  for await (const entry of Deno.readDir("posts")) {
-    if (entry.isFile && entry.name.endsWith(".md")) {
-      let content = await Deno.readTextFile(`posts/${entry.name}`);
-      const slug = entry.name.replace(/\.md$/, "");
 
-      // Add url to frontmatter
-      content = content.replace(/^---\n/, `---\nurl: ${baseUrl}/posts/${slug}/\n`);
+  const writeRawMarkdown = async (srcDir: string, urlPrefix: string, outDir: string) => {
+    try {
+      for await (const entry of Deno.readDir(srcDir)) {
+        if (entry.isFile && entry.name.endsWith(".md")) {
+          let content = await Deno.readTextFile(`${srcDir}/${entry.name}`);
+          const slug = entry.name.replace(/\.md$/, "");
 
-      // Convert relative paths to absolute URLs in markdown links/images
-      content = content.replace(/\]\(\//g, `](${baseUrl}/`);
+          // Add url to frontmatter
+          content = content.replace(/^---\n/, `---\nurl: ${baseUrl}${urlPrefix}${slug}/\n`);
 
-      await Deno.writeTextFile(`_site/posts/${entry.name}`, content);
+          // Convert relative paths to absolute URLs in markdown links/images
+          content = content.replace(/\]\(\//g, `](${baseUrl}/`);
+
+          await Deno.writeTextFile(`${outDir}/${entry.name}`, content);
+        }
+      }
+    } catch (_e) {
+      // Source directory may not exist (e.g., en/posts before any English post is written)
     }
-  }
+  };
+
+  await writeRawMarkdown("posts", "/posts/", "_site/posts");
+  await Deno.mkdir("_site/en/posts", { recursive: true });
+  await writeRawMarkdown("en/posts", "/en/posts/", "_site/en/posts");
 
   // Write custom robots.txt (overrides sitemap plugin's default)
   const robotsTxt = `User-agent: *

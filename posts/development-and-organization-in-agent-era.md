@@ -4,6 +4,7 @@ description: "Coding Agentと並走する開発で、1人がdaily 300 commit / 6
 date: 2026-02-24
 tags: [Coding Agent, Claude Code, Organization, Productivity, Team Design]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

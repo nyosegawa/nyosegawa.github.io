@@ -423,12 +423,35 @@ nav.toc a:hover {
 
 /* ====== Coding Agent notice (auto-inserted) ====== */
 
-.post-body::before {
+[lang="ja"] .post-body::before {
   content: "この記事はCoding Agentを使って執筆されています。";
   display: block;
   color: #7a8a98;
   font-size: 0.85em;
   margin-bottom: 1.2em;
+}
+
+[lang="en"] .post-body::before {
+  content: "This article was written with a coding agent.";
+  display: block;
+  color: #7a8a98;
+  font-size: 0.85em;
+  margin-bottom: 1.2em;
+}
+
+/* ====== Lang Toggle ====== */
+
+.lang-toggle {
+  font-family: var(--font-ui-bold);
+  font-weight: 700;
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
+  min-width: 2.4em;
+  text-align: center;
+}
+
+.lang-toggle:hover {
+  text-decoration: none;
 }
 
 /* ====== Pagination ====== */

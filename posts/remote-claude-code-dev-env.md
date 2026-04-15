@@ -4,6 +4,7 @@ description: "Ghostty + tmux + happy-coder を組み合わせて、3デバイス
 date: 2026-02-13T15:00:00
 tags: [Claude Code, Ghostty, tmux, happy-coder, WSL, Remote Dev]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川 ([@gyakuse](https://x.com/gyakuse)) です！

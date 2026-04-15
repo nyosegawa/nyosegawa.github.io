@@ -4,6 +4,7 @@ description: "Copilot, Codex, Claude Code, Antigravity, Cursor, Devin, Kiro, Win
 date: 2026-03-27
 tags: [Coding Agent, Privacy, 利用規約]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川 ([@gyakuse](https://x.com/gyakuse)) です！

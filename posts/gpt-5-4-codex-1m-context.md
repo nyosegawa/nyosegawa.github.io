@@ -4,6 +4,7 @@ description: "GPT-5.4の概要、Codexのmodels.jsonから読み解くinstructio
 date: 2026-03-06
 tags: [GPT-5.4, OpenAI, Codex, LLM]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川 ([@gyakuse](https://x.com/gyakuse)) ちゃんです

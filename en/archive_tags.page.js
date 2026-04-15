@@ -1,6 +1,5 @@
 export const layout = "layouts/archive_result.vto";
 
-// Match Lume's slugifier behavior (alphanumeric: true, lowercase: true)
 function slugify(str) {
   return str
     .replaceAll(/[^a-z\d/-]/giu, (char) => {
@@ -14,13 +13,12 @@ function slugify(str) {
 }
 
 export default function* ({ search, i18n, paginate }) {
-  // Generate a page for each tag
-  for (const tag of search.values("tags", "type=post lang=ja")) {
+  for (const tag of search.values("tags", "type=post lang=en")) {
     if (!tag) continue;
     const slug = slugify(tag);
     if (!slug) continue;
-    const url = (n) => (n === 1) ? `/archive/${slug}/` : `/archive/${slug}/${n}/`;
-    const pages = search.pages(`type=post lang=ja '${tag}'`);
+    const url = (n) => (n === 1) ? `/en/archive/${slug}/` : `/en/archive/${slug}/${n}/`;
+    const pages = search.pages(`type=post lang=en '${tag}'`);
 
     for (const page of paginate(pages, { url, size: 10 })) {
       yield {
@@ -34,14 +32,13 @@ export default function* ({ search, i18n, paginate }) {
     }
   }
 
-  // Generate a page for each author
-  for (const author of search.values("author", "type=post lang=ja")) {
+  for (const author of search.values("author", "type=post lang=en")) {
     if (!author) continue;
     const slug = slugify(author);
     if (!slug) continue;
     const url = (n) =>
-      (n === 1) ? `/author/${slug}/` : `/author/${slug}/${n}/`;
-    const pages = search.pages(`type=post lang=ja author='${author}'`);
+      (n === 1) ? `/en/author/${slug}/` : `/en/author/${slug}/${n}/`;
+    const pages = search.pages(`type=post lang=en author='${author}'`);
 
     for (const page of paginate(pages, { url, size: 10 })) {
       yield {

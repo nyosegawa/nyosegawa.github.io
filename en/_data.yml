@@ -1,0 +1,121 @@
+lang: en
+
+home:
+  welcome: |
+    Sakasegawa's blog.
+    Most posts on this blog are written with the help of coding agents.
+
+menu_links:
+  - text: Blog
+    href: /en/blog/
+
+portfolio:
+  name: Sakasegawa's Homepage
+  bio: |
+    Software engineer building AI applications and agents.
+  links:
+    - text: GitHub
+      href: https://github.com/nyosegawa
+      icon: github
+    - text: X
+      href: https://x.com/gyakuse
+      icon: x
+    - text: Zenn
+      href: https://zenn.dev/sakasegawa
+      icon: zenn
+    - text: Email
+      href: mailto:nyosegawa@gmail.com
+      icon: email
+
+  projects:
+    - title: Computer Agent / RPA Agent
+      description: Agents built on top of computer-use
+      image: /img/portfolio/computer-agent.png
+      links:
+        - text: Article
+          href: https://zenn.dev/sakasegawa/articles/2a7119364775e7
+        - text: Computer Agent Demo
+          href: https://www.youtube.com/watch?v=xiZNvoGGNqk
+        - text: RPA Agent Demo
+          href: https://www.youtube.com/watch?v=6PubH-U_nuQ
+
+    - title: Subtitle / Dubbing System
+      description: Multilingual video subtitling and AI dubbing system
+      video: https://www.youtube.com/watch?v=vV1q4pVCjOc
+      links:
+        - text: Subtitle Demo
+          href: https://www.youtube.com/watch?v=vV1q4pVCjOc
+        - text: Dubbing Demo (ES→JA)
+          href: https://www.youtube.com/watch?v=hbgJTcwPzWk
+        - text: Dubbing Demo (DE→KO)
+          href: https://www.youtube.com/watch?v=wdf8MLU_gnY
+
+    - title: Virtual Try-On
+      description: Virtual try-on system
+      image: /img/portfolio/virtual-tryon.png
+      links:
+        - text: Demo
+          href: https://www.youtube.com/watch?v=Z1pv_vb9diI
+
+    - title: Hiragana ASR
+      description: Speech recognition model that transcribes Japanese speech as hiragana
+      video: https://www.youtube.com/watch?v=2VU2mJ6XHTs
+      links:
+        - text: Article
+          href: /en/posts/hiragana-asr/
+        - text: Demo
+          href: https://huggingface.co/spaces/sakasegawa/hiragana-asr
+        - text: GitHub
+          href: https://github.com/nyosegawa/hiragana-asr
+        - text: Model
+          href: https://huggingface.co/sakasegawa/japanese-wav2vec2-large-hiragana-ctc
+
+    - title: spark-banana
+      description: A fast UI iteration tool combining Codex Spark and nanobanana
+      image: /img/portfolio/spark-banana.jpeg
+      links:
+        - text: Article
+          href: /en/posts/spark-banana-introduction/
+        - text: GitHub
+          href: https://github.com/nyosegawa/spark-banana
+
+    - title: notion-cli
+      description: Notion CLI tool for coding agents
+      image: /og/notion-cli-for-coding-agent.jpg
+      links:
+        - text: Article
+          href: /en/posts/notion-cli-for-coding-agent/
+        - text: GitHub
+          href: https://github.com/nyosegawa/notion-cli
+        - text: npm
+          href: https://www.npmjs.com/package/@sakasegawa/ncli
+
+  featured_posts:
+    - title: "Comparing 21 Japanese Handwriting OCR Models"
+      href: /en/posts/japanese-handwriting-ocr-comparison/
+      image: /og/japanese-handwriting-ocr-comparison.jpg
+      date: 2026-03-17
+    - title: Harness Engineering Best Practices
+      href: /en/posts/harness-engineering-best-practices-2026/
+      image: /og/harness-engineering-best-practices-2026.jpg
+      date: 2026-03-09
+    - title: "Skill Design Lessons from skill-creator, and Building an Orchestration Skill"
+      href: /en/posts/skill-creator-and-orchestration-skill/
+      image: /og/skill-creator-and-orchestration-skill.jpg
+      date: 2026-03-04
+    - title: "Coding Agent Roundup (January 2026)"
+      href: https://zenn.dev/sakasegawa/articles/af8ede2e4d7da4
+      image: /img/portfolio/zenn-coding-agent.png
+      date: 2026-01-26
+    - title: "I Built 10 AI Apps and 3 AI Agents Solo"
+      href: https://zenn.dev/sakasegawa/articles/2a7119364775e7
+      image: /img/portfolio/zenn-10apps.png
+      date: 2025-08-07
+
+metas:
+  site: "Sakasegawa's Homepage"
+  description: "=description || Sakasegawa's portfolio and blog"
+  title: "=title"
+  image: "=image || https://nyosegawa.com/icon.png"
+  twitter: "@gyakuse"
+  lang: en

@@ -4,6 +4,7 @@ description: "Coding Agentで何でも作れるようになった今、作らな
 date: 2026-03-09
 tags: [Coding Agent, Product Management, Organization, Essay]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

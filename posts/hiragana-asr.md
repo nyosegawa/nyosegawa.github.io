@@ -4,6 +4,7 @@ description: "Whisperのハルシネーション問題を避けるため、wav2v
 date: 2026-03-03
 tags: [ASR, wav2vec2, CTC, Japanese, 音声認識, LLM]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

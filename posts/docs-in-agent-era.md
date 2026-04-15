@@ -4,6 +4,7 @@ description: "コードにはフィードバックループがあるのにドキ
 date: 2026-03-17
 tags: [AI, Claude Code, Documentation, ADR, Agentic Engineering]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！

@@ -4,6 +4,7 @@ description: "Coding Agent時代のハーネスエンジニアリングのベス
 date: 2026-03-09
 tags: [Harness Engineering, AI Agent, Claude Code, Codex, Testing, Linter]
 author: 逆瀬川ちゃん
+lang: ja
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！
