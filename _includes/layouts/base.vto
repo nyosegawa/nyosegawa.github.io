@@ -19,6 +19,39 @@
     {{ it.extra_head?.join("\n") }}
   </head>
   <body>
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("lang-banner-dismissed") === "1") return;
+        } catch (_) {}
+        var pageLang = document.documentElement.lang || "ja";
+        var langs = navigator.languages || [navigator.language || ""];
+        var primary = (langs[0] || "").toLowerCase();
+        var wantsEn = primary.indexOf("en") === 0;
+        var wantsJa = primary.indexOf("ja") === 0;
+        // Show only when the visitor's primary language differs from the page language
+        var show = (pageLang === "ja" && wantsEn) || (pageLang === "en" && wantsJa);
+        if (!show) return;
+        var toggle = document.querySelector("a.lang-toggle");
+        if (!toggle) return;
+        var altHref = toggle.getAttribute("href");
+        if (!altHref || altHref === "#") return;
+        var banner = document.createElement("div");
+        banner.className = "lang-banner";
+        var msg, cta;
+        if (pageLang === "ja") { msg = "English version available."; cta = "Read in English →"; }
+        else { msg = "日本語版があります。"; cta = "日本語で読む →"; }
+        banner.innerHTML = '<span class="lang-banner-msg"></span> <a class="lang-banner-cta"></a> <button class="lang-banner-close" aria-label="dismiss">×</button>';
+        banner.querySelector(".lang-banner-msg").textContent = msg;
+        var ctaLink = banner.querySelector(".lang-banner-cta");
+        ctaLink.textContent = cta;
+        ctaLink.setAttribute("href", altHref);
+        var dismiss = function () { try { localStorage.setItem("lang-banner-dismissed", "1"); } catch (_) {} };
+        banner.querySelector(".lang-banner-close").addEventListener("click", function () { banner.remove(); dismiss(); });
+        ctaLink.addEventListener("click", dismiss);
+        document.body.insertBefore(banner, document.body.firstChild);
+      })();
+    </script>
     <nav class="navbar">
       <a href="{{ it.lang == 'en' ? '/en/' : '/' }}" class="navbar-home">
         {{ if it.logo }}

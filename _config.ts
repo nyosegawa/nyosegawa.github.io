@@ -149,6 +149,8 @@ site.process([".html"], (pages) => {
     // Rewrite intra-blog links on EN pages to the English counterpart when one exists
     if (isEn) {
       doc.querySelectorAll("a[href]").forEach((link) => {
+        // Don't touch the lang toggle — its href is the JA counterpart by design
+        if (link.classList.contains("lang-toggle")) return;
         const href = link.getAttribute("href");
         if (!href) return;
 

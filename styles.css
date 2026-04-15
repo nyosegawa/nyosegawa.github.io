@@ -439,6 +439,47 @@ nav.toc a:hover {
   margin-bottom: 1.2em;
 }
 
+/* ====== Lang Banner ====== */
+
+.lang-banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.6em 1em;
+  background-color: var(--color-base);
+  color: white;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.lang-banner-cta {
+  color: white !important;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.lang-banner-cta:hover {
+  text-decoration-color: white;
+  color: white !important;
+}
+
+.lang-banner-close {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2em;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+  padding: 0 0.3em;
+}
+
+.lang-banner-close:hover {
+  opacity: 1;
+}
+
 /* ====== Lang Toggle ====== */
 
 .lang-toggle {
