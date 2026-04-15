@@ -146,6 +146,35 @@ site.process([".html"], (pages) => {
       }
     }
 
+    // Rewrite intra-blog links on EN pages to the English counterpart when one exists
+    if (isEn) {
+      doc.querySelectorAll("a[href]").forEach((link) => {
+        const href = link.getAttribute("href");
+        if (!href) return;
+
+        let pathPart: string;
+        let isAbsolute = false;
+        if (href.startsWith("/posts/")) {
+          pathPart = href;
+        } else if (href.startsWith("https://nyosegawa.com/posts/")) {
+          pathPart = href.slice("https://nyosegawa.com".length);
+          isAbsolute = true;
+        } else {
+          return;
+        }
+
+        // Split off any #fragment or ?query before checking page existence
+        const match = pathPart.match(/^(\/posts\/[^?#]*)(.*)$/);
+        if (!match) return;
+        const [, basePath, suffix] = match;
+        const enBase = "/en" + basePath;
+        if (!urlSet.has(enBase)) return;
+
+        const enHref = (isAbsolute ? "https://nyosegawa.com" : "") + enBase + suffix;
+        link.setAttribute("href", enHref);
+      });
+    }
+
     // Open external links in new tab
     doc.querySelectorAll("a[href^='http']").forEach((link) => {
       const href = link.getAttribute("href");
