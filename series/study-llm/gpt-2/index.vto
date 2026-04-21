@@ -139,7 +139,7 @@ extra_head:
   <section id="overview" class="gpt2-section">
     <h2>推論の全体像 — 1 回の forward で 1 トークン</h2>
     <p>
-      GPT-2 が「入力文字列から次の 1 トークンを出す」までにやっていることは、ざっくり 5 段階です。先に大枠を眺めておきます。
+      GPT-2 が入力文字列から次の 1 トークンを出すまでにやっていることは以下のとおりです。先に流れを見ておきます。
     </p>
     <ol class="gpt2-overview-list">
       <li><strong>分割</strong>: 文字列を整数の列 (トークン ID) に切る。ニューラルネットは文字を直接食えないため</li>
@@ -148,9 +148,6 @@ extra_head:
       <li><strong>確率化</strong>: 最終位置のベクトルを語彙サイズ (50,257) に戻し、softmax で確率分布にしてから 1 トークン選ぶ</li>
       <li><strong>ループ</strong>: 出たトークンを入力の末尾に足してまた 1 に戻る。長文を生成するには、これを何十〜何百回と繰り返す</li>
     </ol>
-    <p>
-      1 つ混同しやすいのが、<strong>Attention の重みそのものは「次のトークンの確率」ではない</strong>という点です。最終的な確率分布は 4 の softmax で初めて出てきます。途中の attention 行列は「位置同士で情報をどう混ぜるか」に使う別物です。
-    </p>
   </section>
 
   <section id="tokenize" class="gpt2-section">
@@ -283,7 +280,7 @@ extra_head:
   <section id="embed" class="gpt2-section">
     <h2>② Embed — ID をベクトルに</h2>
     <p>
-      学習済みの <strong>埋め込み表</strong> が 2 枚あります:
+      学習済みの <strong>埋め込み</strong> が 2 枚あります:
     </p>
     <ul class="gpt2-embed-tables">
       <li><code>W<sub>E</sub></code>: <strong>50,257 × 768</strong> — 各語彙 ID に対する 768 次元ベクトル</li>
@@ -407,6 +404,9 @@ extra_head:
           Sinusoidal や RoPE のように関数で位置を計算する方式なら、理屈の上では任意の長さに延ばせます。
           そこから学習で見た範囲を超える長さにも (ある程度) 使えるようになり、2026 年の Claude Opus 4.7 や Gemini 3.1 Pro の 1M トークン文脈、さらには OSS の Qwen3.6-35B-A3B が YaRN で native 約 262K を 約 1.01M まで伸ばす、といった long-context 化の流れが生まれていきました。
         </p>
+        <p class="gpt2-note">
+          YaRN がどうやって RoPE の周波数を伸ばしているのか、その仕組みを数式レベルで追いたい方は、ABEJA Tech Blog の <a href="https://tech-blog.abeja.asia/entry/advent-2025-day10">YaRN の解説記事</a> が丁寧でおすすめです。
+        </p>
 
         <table class="gpt2-history">
           <thead>
@@ -436,42 +436,39 @@ extra_head:
   <section id="attention" class="gpt2-section">
     <h2>③ Attention — 過去を振り返る</h2>
     <p>
-      ここからが Transformer の心臓部です。② で作った 768 次元のベクトル列 (<code>x<sub>0</sub></code>、長さ N × 次元 768) がこのステップに入ってきて、同じ形 (N × 768) のベクトル列が出ていきます。ただし中身は書き換わっていて、各位置のベクトルに「過去の位置の情報」が混ざり込んでいる、というのがこのステップで起きることです。
+      ここからが Transformer の心臓部です。② で作ったベクトル列が入ってきて、同じ形のベクトル列が出ていきます。ただし中身は書き換わっていて、各位置のベクトルに「過去の位置の情報」が混ざり込んだ状態になります。
     </p>
     <p>
-      各位置でやっていることはシンプルで、自分と自分より前の位置 (causal なので未来は見ない) のベクトルを重み付きで足し合わせて、新しい出力ベクトルを作ります。重みは位置ごとに変わって、相性のいい位置ほど大きな値を持ちます。たとえば i=5 の位置なら、位置 0〜5 の計 6 本のベクトルに対して重みが 1 つずつ決まり、その合計はちょうど 1 になります (具体的な重み分布は、このあと本物のデータで動かせます)。
+      各位置でやるのは 1 つだけです。自分と自分より前の位置のベクトルを、相性のいい位置ほど大きな重みで、合計が 1 になるように加重平均する。それだけです。未来は見ません (これを causal と呼びます)。具体的な重み分布は、このあとヒートマップで本物のデータを動かせます。
     </p>
 
-    <h3 class="gpt2-subh">どうやって重みを決めるか — Q/K/V</h3>
+    <h3 class="gpt2-subh">どうやって重みを決めるか: Q/K/V</h3>
     <p>
-      相性を測るために、各位置の 768 次元ベクトルは 3 つの 64 次元ベクトルに分岐します (64 という数字は 768 / 12 で、後述の 12 ヘッド分の取り分です)。呼び方はそれぞれ Query (Q)、Key (K)、Value (V) で、どれも元のベクトルに別々の行列を掛けて作るだけです。役割はこんな感じです:
+      相性を測るために、各位置のベクトルから Query (Q)、Key (K)、Value (V) という 3 つのベクトルを作ります。役割はこんなイメージです:
     </p>
     <ul>
-      <li><strong>Q (Query)</strong>: 「いま自分は何を探しているか」を表すベクトル</li>
-      <li><strong>K (Key)</strong>: 「自分は何を提供できるか」の看板となるベクトル</li>
-      <li><strong>V (Value)</strong>: 「実際に渡す情報」の中身となるベクトル</li>
+      <li>Q (Query): いま自分は何を探しているか</li>
+      <li>K (Key): 自分は何を提供できるか (看板)</li>
+      <li>V (Value): 実際に渡す情報の中身</li>
     </ul>
     <p>
-      「位置 5 が位置 2 をどれだけ見るか」は、位置 5 の Q と位置 2 の K の相性 (具体的には内積) で決まります。これを全位置ペアについて一気に計算すると、「どの位置がどの位置をどれだけ見るか」の N × N 行列ができあがります。これを softmax に通して行ごとに合計が 1 の重みにし、その重みで全位置の V を加重平均する、というのがこのステップの正味の中身です。数式で書くと 1 行で済むので、興味があれば下の付録「Attention の式とスケーリングの意味」で見てください。
+      「位置 5 が位置 2 をどれだけ見るか」は、5 の Q と 2 の K の内積で決まります。その値を softmax で合計 1 の重みに直して、その重みで全位置の V を加重平均する。これが Attention の正味の中身です。
     </p>
     <p>
-      重要なのは、この処理が全位置同時に 1 回の行列積で書けることです。N 個の位置を順番に処理する必要がなく、行列をドンと 1 回掛けるだけで N 位置すべての出力が同時に出てくる、というのが Attention が GPU 時代に大勝ちした直接の理由で、RNN では到底真似できなかった性質です (このあたりは下の歴史的付録で掘り下げています)。
+      なお各位置での Q/K/V は、元のベクトルに別々の行列を掛けるだけで作ります。その行列自体もデータから学ばれるので、「何を探すか」「何を看板に出すか」「何を渡すか」まで人間が決めずに済むのが Attention のご利益です。式 1 行の正体や \(\sqrt{d_k}\) で割るスケーリングの話は<a href="#appendix-attn-formula">付録「Attention の式とスケーリングの意味」</a>で扱います。
     </p>
 
     <h3 class="gpt2-subh">マスクで未来を隠す</h3>
     <p>
-      GPT-2 は「次のトークンを予測する」モデルなので、位置 i は位置 i+1 以降を見てはいけません (見たら答え合わせが見えてしまってカンニング状態になります)。これを保証するため、N × N の attention 行列の右上三角 (未来の位置) を softmax 前に -∞ で埋めて、softmax 後の重みを 0 にします。これが「マスク付き (causal) Self-Attention」で、下のヒートマップの右上が真っ白なのはこれが効いているからです。
+      位置 i が位置 i+1 以降を見てしまうと、答え合わせが見えてしまってカンニングになります。そこで attention 行列の右上三角を softmax 前に −∞ で埋めて、softmax 後の重みを 0 にします。これが causal mask で、下のヒートマップの右上が真っ白なのはその効果です。
     </p>
 
-    <h3 class="gpt2-subh">Multi-Head と、学習で決まる射影</h3>
+    <h3 class="gpt2-subh">1 層で 12 並列 (Multi-Head)</h3>
     <p>
-      Q/K/V を作る 3 つの射影行列と、最後に加重平均した V を 768 次元に戻す 1 つの射影行列、計 4 つの行列は全部学習で決まります。「何を探すべきか」「何を看板として出すべきか」「実際に何を渡すか」「混ぜ戻した結果をどう使うか」までデータから学ぶ、というのが Attention の本質で、重み自体は人間が設計していません。
+      GPT-2 small は、この Q/K/V の仕組みを 1 層あたり 12 個並列で持ちます。12 個のヘッドがそれぞれ別の「注目の切り口」を学んでくれるので、あるヘッドは直前の単語を、別のヘッドは主語と動詞の対応を、といった分業が自然に発生します (<a href="#ref-elhage2021">Elhage+ 2021</a>)。Head ごとの具体的な次元の割り方や、全位置を 1 回の行列積でまとめて処理できる並列性の話は<a href="#appendix-attn-formula">付録</a>に寄せています。
     </p>
     <p>
-      さらに GPT-2 small は、この Q/K/V の仕組みを 1 層あたり 12 並列で持ちます (Multi-Head Attention)。12 個の Head がそれぞれ別の Q/K/V 射影を持ち、それぞれ別の「注目の切り口」を学ぶので、あるヘッドは直前の単語を強く見て、別のヘッドは主語と動詞の対応を見て、などの分業が自然に発生することが解析で知られています (<a href="#ref-elhage2021">Elhage+ 2021</a>)。
-    </p>
-    <p>
-      前置きが長くなりましたが、ここからは実データで眺めます。まずプロンプト全体の N × N attention ヒートマップ、その下で「1 行を拡大」して棒グラフで見ます (位置 i のスライダーで注目元の行を選べます)。Layer / Head を動かすと、Head ごとに注目パターンの性格がはっきり変わるのが見えます:
+      では実データで眺めていきます。プロンプト全体の N × N ヒートマップと、その下で行 1 つを棒グラフに拡大したもの、2 つを並べます。Layer / Head を動かすと、ヘッドごとに注目パターンの性格がはっきり変わるのが見えます:
     </p>
     <div class="gpt2-attn-controls">
       <label>
@@ -523,7 +520,7 @@ extra_head:
       </div>
     </details>
 
-    <details class="gpt2-appendix">
+    <details class="gpt2-appendix" id="appendix-attn-history">
       <summary><strong>付録</strong>なぜ Attention が必要になったか — 2014 から 2017 までの流れ</summary>
       <div class="gpt2-appendix-body">
         <p>
@@ -568,7 +565,7 @@ extra_head:
       </div>
     </details>
 
-    <details class="gpt2-appendix">
+    <details class="gpt2-appendix" id="appendix-attn-formula">
       <summary><strong>付録</strong>Attention の式とスケーリングの意味</summary>
       <div class="gpt2-appendix-body">
         <p>
@@ -578,9 +575,9 @@ extra_head:
           \text{Attn}(Q, K, V) = \text{softmax}\!\left(\frac{Q K^\top}{\sqrt{d_k}} + M\right) V
         \]
         <ul>
-          <li>Q (Query): 「今いる位置が、何を探しているか」</li>
-          <li>K (Key): 「他の位置が、何を提供できるか」</li>
-          <li>V (Value): 「他の位置が、実際に渡す情報」</li>
+          <li>Q (Query): 今いる位置が何を探しているか</li>
+          <li>K (Key): 他の位置が何を提供できるか</li>
+          <li>V (Value): 他の位置が実際に渡す情報</li>
         </ul>
         <p>
           Q と K の内積で「相性の良さ」を測り、softmax で確率化して、それを V の重み付き平均にするだけの操作です。シンプルですね。
@@ -592,8 +589,18 @@ extra_head:
         <p>
           マスク \(M\) は右上三角を \(-\infty\) で埋めた行列です。softmax 後に未来のトークンの重みを 0 にして、自己回帰性 (過去しか見ない) を保証します。ヒートマップで右上が真っ白なのはこれが理由です。
         </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">Multi-Head の具体 (12 並列の割り方)</h4>
         <p>
-          Multi-Head については、GPT-2 small は 12 ヘッドを並列で持ちます。それぞれが別の Q/K/V 射影を持ち、違う観点で注目を計算します。「直前を見るヘッド」「主語を見るヘッド」「文末の予兆を捉えるヘッド」など、ヘッドごとに分業が起きることが解析で知られています (<a href="#ref-elhage2021">Elhage+ 2021</a>)。
+          Multi-Head Attention は、1 層のなかで上の式をまるごと 12 本走らせる構造です。GPT-2 small は 768 次元を 64 次元ずつ 12 個に割り当てて、各ヘッドがそれぞれ別の \(W_Q, W_K, W_V\) を学びます。最後に 12 ヘッドぶんの出力 (それぞれ 64 次元) を横に連結して 768 次元に戻し、もう 1 つの射影 \(W_O\) を掛けて整えます。
+        </p>
+        <p>
+          つまり、1 ヘッドあたり \(W_Q, W_K, W_V\) の 3 つに加えて、Multi-Head をまとめ戻すための \(W_O\) を 1 つ、計 4 つの行列が 1 層あたりのパラメータになります。どれも学習で決まるので、「何を探すか」「何を看板にするか」「何を渡すか」「どうまとめ直すか」までデータから学ばれます。ヘッドごとに「直前を見るヘッド」「主語と動詞の対応を見るヘッド」のような分業が自然に起きることが解析で知られています (<a href="#ref-elhage2021">Elhage+ 2021</a>)。
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">なぜ GPU 時代に Attention が勝ったか</h4>
+        <p>
+          この式のいいところは、全位置の出力が 1 回の行列積で一気に出せる点です。\(Q K^\top\) は N × N の行列 1 本なので、N 個の位置を順に処理する必要がありません。RNN は定義上「時刻 t は t-1 が終わってからでないと始まらない」ので GPU が暇になりがちでしたが、Attention は GPU がフルに回るので学習速度が桁違いに上がりました。歴史的な経緯は<a href="#appendix-attn-history">付録「なぜ Attention が必要になったか」</a>で掘り下げています。
         </p>
       </div>
     </details>
@@ -603,33 +610,26 @@ extra_head:
     <h2>④ 12 層を積む — ブロックは何をしているのか</h2>
 
     <p>
-      ③ で眺めた Attention は、実は 12 層あるブロックのうち 1 つの中で行われている 1 回ぶんの計算でした。ヒートマップの Layer スライダーで 0 から 11 まで動かせたのも、まさにこの 12 個の別々の Attention を切り替えて見ていたからです。ここからはカメラを引いて、その Attention が「1 ブロック」の中でどう組み合わされているか、そしてブロックがどう 12 個積み上がって GPT-2 small の本体を作っているかを見ていきます。
-    </p>
-    <p>
-      入口は ② で作った 768 次元のベクトル列 <code>x<sub>0</sub></code> で変わりません。これが同じ形のブロックを 12 回くぐって、同じ形のまま出てくる、というのがここから眺める構造です。
+      ③ で眺めた Attention は、実は 1 ブロックの中にあるパーツの 1 つでした。ヒートマップで Layer を 0 〜 11 で切り替えられたのも、この 12 個のブロックの中身を切り替えていたからです。ここからはカメラを引いて、1 ブロックの構造と、それを 12 個積むことで GPT-2 の本体になる全体像を眺めます。
     </p>
 
     <h3 class="gpt2-subh">1 ブロックのしていること</h3>
     <p>
-      1 ブロックの中身はたった 2 ステップです。どちらも 768 次元のベクトル列を受け取って、同じ形のベクトル列を返します:
+      1 ブロックは 2 ステップだけです:
     </p>
     <ol class="gpt2-block-steps">
       <li>
-        Attention: ③ で見た通り、各位置が自分と過去の位置のベクトルを加重平均した結果を受け取ります。ここで「位置同士の情報のやりとり」が起きる、というのが 1 つ目の仕事です
+        Attention: ③ で見たとおり、各位置が過去の位置のベクトルを加重平均して情報を集めます
       </li>
       <li>
-        MLP: 各位置で独立に変換する。各位置のベクトルに、2 層の全結合ネットワーク (<code>768 → 3,072 → 768</code>) を適用します。
-        位置ごとに「まったく同じ重み」を使い、位置同士のやりとりは発生しません。
-        途中に非線形関数 (GELU) が挟まることで、単純な行列演算では作れない特徴を抽出できます
+        MLP: 各位置で独立にベクトルを変換します。位置同士のやりとりはなく、ここでは「集めた情報を加工する」ことに専念します
       </li>
     </ol>
     <p>
-      ひとことで言うと、Attention が位置横断の情報収集、MLP が各位置での変換です。
-      この 2 ステップを交互に繰り返すのが Transformer の基本形になります。
+      ひとことで言うと、Attention が位置横断の情報収集、MLP が各位置での変換です。この 2 ステップを交互に繰り返すのが Transformer の基本形になります。
     </p>
     <p>
-      そして重要なのが、どちらのステップも結果を上書きしないという点です。
-      出力を元の入力に <code>+</code> で足し込むだけなのです。これを残差接続 (residual connection, <a href="#ref-he2016">He+ 2016</a>) と呼びます。
+      そしてもう 1 つ大事なのが、どちらのステップも結果を上書きしない、という点です。出力を元の入力に足し込むだけで済ませます。これを残差接続 (residual connection, <a href="#ref-he2016">He+ 2016</a>) と呼びます。上書きしないおかげで深く積んでも信号が壊れにくくなります。
     </p>
 
     <div class="gpt2-diagrams">
@@ -674,32 +674,44 @@ extra_head:
       </figure>
     </div>
 
-    <h3 class="gpt2-subh">residual stream という考え方</h3>
-    <p>
-      ブロックがベクトルに「書き足す」だけ、という性質は、見方を変えると強力な含意を持ちます。
-      入力 <code>x<sub>0</sub></code> から最終 <code>x<sub>12</sub></code> まで流れる 768 次元のベクトルを residual stream と呼ぶことがあり、
-      各ブロックはこの共有バスに対して「読んで」「書き込む」役割を担います (<a href="#ref-elhage2021">Elhage+ 2021</a>)。
-    </p>
-    <ul>
-      <li>Attention は stream から Q / K / V を読み、結果を stream に足して書き戻す</li>
-      <li>MLP も stream から読んで、加工結果を足して書き戻す</li>
-      <li>各ブロックの仕事は独立で、ゼロから表現を作り直さない</li>
-    </ul>
-    <p>
-      このモデルの下では、学習中にある層が「何もしない (出力 0)」になってもブロックを素通りするだけで破綻しません。
-      だから安全に深く積めて、途中のブロックが自然に分業を覚える (「構文を捉える層」「固有名詞を扱う層」「次語を準備する層」など) ことが解析で知られています。
+    <p class="gpt2-note">
+      ひとことで言うと、GPT-2 は 768 次元のベクトル列を、Attention (位置横断で情報を集約) と MLP (各位置で変換) の 2 ステップで 12 回編集するだけの装置です。これで文章が書けているのは、改めて驚異的だなと思います。ブロックが「上書きせず足し込むだけ」という性質の深い含意は<a href="#appendix-residual-stream">付録「残差ストリームという見方」</a>で扱います。
     </p>
 
-    <p class="gpt2-note">
-      以上をひとことで言うと、GPT-2 は 768 次元のベクトル列を、Attention (位置横断で情報を集約) と MLP (各位置で変換) の 2 ステップで 12 回編集するだけの装置です。
-      これで文章を書けているのが、改めて驚異的だなと思います。
-    </p>
+    <details class="gpt2-appendix" id="appendix-residual-stream">
+      <summary><strong>付録</strong>残差ストリームという見方 — ブロックの役割分担</summary>
+      <div class="gpt2-appendix-body">
+        <p>
+          ブロックがベクトルに「書き足す」だけ、という性質は、見方を変えると強力な含意を持ちます。入力 <code>x<sub>0</sub></code> から最終 <code>x<sub>12</sub></code> まで流れる 768 次元のベクトルを残差ストリーム (residual stream) と呼ぶことがあり、各ブロックはこの共有バスに対して「読んで、書き込む」役割を担います (<a href="#ref-elhage2021">Elhage+ 2021</a>)。
+        </p>
+        <ul>
+          <li>Attention は残差ストリームから Q / K / V を読み、結果を残差ストリームに足して書き戻す</li>
+          <li>MLP も残差ストリームから読んで、加工結果を足して書き戻す</li>
+          <li>各ブロックの仕事は独立で、ゼロから表現を作り直さない</li>
+        </ul>
+        <p>
+          このモデルの下では、学習中にある層が「何もしない (出力 0)」になってもブロックを素通りするだけで破綻しません。だから安全に深く積めて、途中のブロックが自然に分業を覚える (構文を捉える層、固有名詞を扱う層、次語を準備する層など) ことが解析で知られています。
+
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">MLP の内訳</h4>
+        <p>
+          本文では「各位置で独立に変換する」とだけ書いた MLP ですが、中身は 2 層の全結合です:
+        </p>
+        \[
+          \text{MLP}(x) = W_2 \,\text{GELU}(W_1 x)
+        \]
+        <p>
+          GPT-2 small では <code>W<sub>1</sub></code> が 768 → 3072、<code>W<sub>2</sub></code> が 3072 → 768 です。間に挟まる GELU は非線形な関数で、これがないと全体がただの大きな行列積に潰れてしまって、層を深くしても何も増えません。中間の 3072 次元は入力の 4 倍で、Transformer の慣習的な設定になっています。
+        </p>
+      </div>
+    </details>
 
     <details class="gpt2-appendix">
       <summary><strong>付録</strong>層ごとにベクトルがどう変わるか — ノルムで眺める</summary>
       <div class="gpt2-appendix-body">
         <p>
-          各ブロックが residual stream に足し込んでいく様子を、ベクトルの <strong>長さ (L2 ノルム)</strong> で観察してみます。
+          各ブロックが残差ストリームに足し込んでいく様子を、ベクトルの <strong>長さ (L2 ノルム)</strong> で観察してみます。
         </p>
         <p>
           下の図の読み方:
@@ -718,7 +730,7 @@ extra_head:
         </p>
         <ul>
           <li>Embed は値が小さい (~1 程度)。埋め込み行列そのままの大きさ</li>
-          <li>層を上がるほど値が大きくなる。各ブロックが足し込みを続けるので、residual stream はどんどん「太って」いく</li>
+          <li>層を上がるほど値が大きくなる。各ブロックが足し込みを続けるので、残差ストリームはどんどん「太って」いく</li>
           <li>最上段の「最終 (+LN)」だけ桁が違う。これは最後に LayerNorm が入って値を正規化するから。この正規化済みベクトルに <code>W<sub>E</sub><sup>T</sup></code> を掛けて logits を出す</li>
           <li>先頭トークン (一番左の列) が異様に大きいのは known phenomenon。最初の位置は過去の文脈がないので attention が発散しやすく、後段に行くほど異常値が溜まる。実用上の問題はあまりなく、<a href="#ref-dettmers2022">Dettmers+ 2022</a> の量子化研究などで詳しく解析されている</li>
         </ul>
@@ -732,9 +744,10 @@ extra_head:
   <section id="sampling" class="gpt2-section">
     <h2>⑤ Logits → 確率 → サンプリング</h2>
     <p>
-      最終層の隠れ状態に <code>W<sub>E</sub><sup>T</sup></code> を掛けると、語彙 50,257 個ぶんの
-      <strong>ロジット</strong> が出ます。softmax で確率化し、そこから 1 語を選びます。
-      temperature や top-k, top-p で分布をどう歪めるかを見てみましょう。
+      12 ブロックを抜けた 768 次元のベクトルを、最後に語彙サイズ (50,257) に戻します。これを ② の埋め込み <code>W<sub>E</sub></code> の転置で行うのが GPT-2 の流儀で、出てくるのが語彙ごとのロジット (確率に変える前の生の値) です。softmax を通せば確率分布になり、そこから 1 語を選ぶ、という流れです。
+    </p>
+    <p>
+      ただ生の確率のままサンプリングすると稀な語が顔を出して文が崩れます。そこで分布を整えるフィルタが 3 つあり、下のスライダーで挙動を動かせます。中身の計算例や使い分けは付録に寄せています。
     </p>
     <div class="gpt2-sampling-controls">
       <label>
@@ -886,42 +899,32 @@ extra_head:
   <section id="train-task" class="gpt2-section">
     <h2>⑦ 学習タスク — 次のトークンを当てるだけ</h2>
     <p>
-      GPT-2 がやっていることは、たった一つです。文の途中までを見て、次に来るトークンを当てます。これを膨大なテキストで何千億回も繰り返すと、勝手に文法・世界知識・論理推論まで身についていくというのが、2019 年当時の驚きでした (<a href="#ref-radford2019">Radford+ 2019</a>)。
-    </p>
-
-    <p>数式にするとこう書けます。文 <code>x<sub>1</sub> x<sub>2</sub> … x<sub>T</sub></code> に対して:</p>
-    \[
-      \mathcal{L} = -\frac{1}{T-1}\sum_{t=1}^{T-1} \log p_\theta(x_{t+1} \mid x_{\le t})
-    \]
-    <p>
-      各位置 <code>t</code> で「次トークンが <code>x<sub>t+1</sub></code> である確率」をモデルに答えさせ、それを対数で評価して平均するだけです。
-      正解の確率が高いほど loss が小さくなるシンプルな仕組みです。これが cross-entropy の正体です (詳細は ⑨ で扱います)。
+      GPT-2 がやっていることは、たった一つです。文の途中までを見て、次に来るトークンを当てる。これを膨大なテキストで何千億回と繰り返すと、勝手に文法も世界知識も論理推論も身についてくる、というのが 2019 年当時の驚きでした (<a href="#ref-radford2019">Radford+ 2019</a>)。具体的にこの「当てる」をどう数値化するか (cross-entropy) は ⑨ で扱います。
     </p>
 
     <h3 class="gpt2-subh">データ: WebText という独自コーパス</h3>
     <p>
-      GPT-2 の学習データは OpenAI が独自に集めた WebText というコーパスです。
-      Reddit で「3 karma 以上の投稿からリンクされた外部ページ」だけを集めることで、
-      人間が「ある程度は読む価値がある」と判断した文章を自動フィルタした格好になっています。
+      GPT-2 の学習データは OpenAI が独自に集めた WebText です。Reddit で 3 karma 以上の投稿からリンクされた外部ページだけを集める、という作り方になっていて、「人間がある程度は読む価値があると判断した文章」を自動でフィルタした格好になっています。規模は 8M ドキュメント / 40GB / 約 10B トークンで、2026 年の LLM と比べると相当小さいです (LLaMA 3 で 15T、LLaMA 4 Scout は約 40T トークン規模)。
     </p>
-    <ul>
-      <li>約 45M リンクをクロールし、重複や Wikipedia を除外して最終 8M ドキュメント / 40GB のテキスト (この 3 つは論文 §2.1 に明記されている数字です)</li>
-      <li>学習時は byte-level BPE でおおむね 10B (100 億) トークン規模 (注: 論文に総トークン数の明示はなく、これはコミュニティでの推定値です。再現版 OpenWebText の BPE 換算が約 9B、GPT-3 論文 Table 2.2 で WebText2 ≒ 19B tokens とされていて、その元になった WebText は概ね半分の 10B 前後と見積もられています)</li>
-      <li>context_length = 1024 なので、文書はこの長さにスライドして切り分ける (1 サンプル = 1024 トークン)</li>
-    </ul>
     <p>
-      2026 年の LLM と比べると小さなデータ量です (公表値で見ると LLaMA 3 が 15T トークン、LLaMA 4 Scout は約 40T トークンで、Gemma 4 や Qwen3.6 系は "trillions of tokens" とだけ公表されていて具体数は非公開ですが、同じオーダーと見られます) が、
-      「教師なし」「自己回帰予測だけ」でここまで文章を書けるモデルが作れると示したのが GPT-2 の功績でした。
+      それでも「自己回帰予測だけ」でここまで文章を書けるモデルが作れると示したのが GPT-2 の功績でした。データ規模やパラメータ数の細かい数字、必要な FLOPs などは<a href="#appendix-scale">付録「学習スケールを数字で」</a>にまとめています。
     </p>
 
-    <details class="gpt2-appendix">
+    <details class="gpt2-appendix" id="appendix-scale">
       <summary><strong>付録</strong>学習スケールを数字で — パラメータ数, FLOPs, トークン数</summary>
       <div class="gpt2-appendix-body">
         <p>
           GPT-2 の規模感を、計算量と照らして追いかけてみます。
         </p>
 
-        <h4 style="margin:1em 0 0.4em;font-size:1em;">各バリアントのパラメータ数</h4>
+        <h4 style="margin:1em 0 0.4em;font-size:1em;">WebText の詳細</h4>
+        <ul>
+          <li>約 45M リンクをクロールし、重複や Wikipedia を除外して最終 8M ドキュメント / 40GB のテキスト (この 3 つは論文 §2.1 の数字です)</li>
+          <li>学習時は byte-level BPE でおおむね 10B (100 億) トークン規模 (注: 論文に総トークン数の明示はなく、これはコミュニティの推定値です。再現版 OpenWebText の BPE 換算が約 9B、GPT-3 論文 Table 2.2 で WebText2 ≒ 19B tokens とされていて、その元になった WebText は概ね半分の 10B 前後と見積もられています)</li>
+          <li>context_length = 1024 なので、文書はこの長さにスライドして切り分ける (1 サンプル = 1024 トークン)</li>
+        </ul>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">各バリアントのパラメータ数</h4>
         <table class="gpt2-history">
           <thead>
             <tr><th>モデル</th><th>n_layer</th><th>d_model</th><th>n_head</th><th>params</th></tr>
@@ -960,7 +963,7 @@ extra_head:
           経験則 (<a href="#ref-kaplan2020">Kaplan+ 2020</a>, <a href="#ref-hoffmann2022">Hoffmann+ 2022</a>) として、1 token 学習 ≒ 6 × N FLOPs (N はパラメータ数) が知られています。
           forward で 2N, backward で 4N、合計 6N FLOPs、という内訳です。
         </p>
-        <p>GPT-2 small (117M) を 10B トークン学習する場合を rough に当てはめてみます (念のため再掲すると、10B はコミュニティでよく引用される推定値で、公式値ではありません。以下の FLOPs / tokens-per-param もそれを前提にした概算です):</p>
+        <p>GPT-2 small (117M) を 10B トークン学習する場合をラフに当てはめてみます (念のため再掲すると、10B はコミュニティでよく引用される推定値で、公式値ではありません。以下の FLOPs / tokens-per-param もそれを前提にした概算です):</p>
         \[
           \begin{aligned}
             \text{FLOPs} &\approx 6 \times 117\text{M} \times 10\text{B} \\
@@ -973,7 +976,7 @@ extra_head:
             \text{理論最短時間} &= \frac{7.02 \times 10^{18}}{1.25 \times 10^{14}}
                                  \approx 5.6 \times 10^{4}\ \text{秒}
                                  \approx 15.6\ \text{時間} \\[2pt]
-            \text{実効効率 30\% として} &\Rightarrow 約\ 2\ 日\ (1\ \text{GPU})
+            \text{実効効率 30\% として} &\Rightarrow \text{約}\ 2\ \text{日}\ (1\ \text{GPU})
           \end{aligned}
         \]
         <p>実際の学習に使われた GPU 台数や所要時間は Radford+ 2019 では明示されていません。この推定は「理論最短の 15.6 時間 × 実効効率 30% を 1 枚想定」なので、数百枚の V100 で数時間〜数日レンジに収まる感覚、くらいに捉えてください。</p>
@@ -1086,30 +1089,31 @@ extra_head:
   <section id="train-loss" class="gpt2-section">
     <h2>⑨ Loss — Cross-Entropy を最小化する</h2>
     <p>
-      各位置の予測から、どうやって 1 つの数値 (loss) に落とすかを見ていきます。
-      モデルの出力は語彙 50,257 個の確率分布で、正解は 1 つのトークン ID です。
-      このギャップを埋めるのが cross-entropy です:
-    </p>
-    \[
-      \text{CE}_t = -\log p_\theta(x_{t+1} \mid x_{\le t})
-    \]
-    <p>
-      「正解トークンの予測確率を対数にして、マイナスを付ける」。やっていることはそれだけです。
-      正解に 100% 振れていれば <code>−log 1 = 0</code>、50% なら約 0.69、1% なら約 4.6 になります。
-      自信をもって外したときほどペナルティが重くなるのが特徴で、学習の初期に大きな信号を与えてくれます。
+      ⑧ で「各位置で予測を並列に出す」ところまで来ました。次はその予測と正解のズレを、1 つの数値 (loss) に落とし込みます。ここで使うのが cross-entropy で、やっていることは「正解トークンの予測確率を対数にして、マイナスを付ける」だけです。
     </p>
     <p>
-      バッチの全位置で <code>CE<sub>t</sub></code> を計算し、平均したものが最終的な loss:
+      確率が 100% 振れていれば <code>−log 1 = 0</code>、50% なら約 0.69、1% なら約 4.6 になります。自信をもって外したときほどペナルティが重くなるのが特徴で、学習の初期に大きな信号を与えてくれます。
     </p>
-    \[
-      \mathcal{L} = \frac{1}{N}\sum_{\text{batch}} \frac{1}{T-1}\sum_{t=1}^{T-1} \text{CE}_t
-    \]
+    <p>
+      これを全位置・全バッチで平均したものが最終的な loss です。式と実数で追いたい方は下の付録をどうぞ。</p>
 
     <details class="gpt2-appendix">
       <summary><strong>付録</strong>実際の数値で追う — cross-entropy loss の計算例</summary>
       <div class="gpt2-appendix-body">
         <p>
-          現在のプロンプトで、モデルの予測分布を使って loss がどう決まるかを実数で追います。
+          まず式で書き起こすと、各位置 \(t\) の cross-entropy は次の形です:
+        </p>
+        \[
+          \text{CE}_t = -\log p_\theta(x_{t+1} \mid x_{\le t})
+        \]
+        <p>
+          これをバッチの全位置で平均すると、最終的な loss になります:
+        </p>
+        \[
+          \mathcal{L} = \frac{1}{N}\sum_{\text{batch}} \frac{1}{T-1}\sum_{t=1}^{T-1} \text{CE}_t
+        \]
+        <p>
+          下は現在のプロンプトで、モデルの予測分布を使って loss がどう決まるかを実数で追ったものです。
         </p>
         <div data-role="train-math"></div>
       </div>
@@ -1139,137 +1143,115 @@ extra_head:
     <h2>⑩ 勾配と更新 — loss を下げる方向に重みを動かす</h2>
 
     <p>
-      ⑨ で「正解との差 = loss」が数値化できました。あとは loss を下げる方向に重みを動かすだけです。
-      1 ステップの学習ループはたった 3 つです:
+      ⑨ で「正解とのズレ」が数値になりました。あとは loss が下がる方向に重みを動かすだけです。1 ステップは 3 段階です:
     </p>
     <ol class="gpt2-block-steps">
-      <li>
-        ① forward: プロンプトを流して loss を計算する (⑦⑨ でやった内容)
-      </li>
-      <li>
-        ② backward: 「各重みを少し増やしたら loss はどう変わるか」を全パラメータについて求める (これを勾配と呼びます)
-      </li>
-      <li>
-        ③ update: 勾配と反対方向に、重みをほんの少しずつ動かす
-      </li>
+      <li>forward: プロンプトを流して loss を計算する (⑦⑨ でやった内容)</li>
+      <li>backward: 各重みについて「少し動かしたら loss がどう変わるか」(= 勾配) を求める</li>
+      <li>update: 勾配と逆方向に、重みをほんの少し動かす</li>
     </ol>
+
+    <h3 class="gpt2-subh">勾配は「こっちに動かせば loss が下がる」の矢印</h3>
     <p>
-      このループを数十万ステップ回すと、小さなニューラルネットが「文章を書ける」何かに育っていきます。
-      順に見ていきましょう。
+      勾配が +0.3 なら「重みを増やすと loss が増える」ので減らす方向へ、−0.5 なら逆に増やす方向へ。GPT-2 small では約 1 億 2 千万個ぶんの重み全部について、これを一気にやります。これで 1 ステップだけ「いまより少しマシ」な重みになります。
     </p>
 
-    <h3 class="gpt2-subh">勾配 = 「こっちに動かせば loss が下がる」の矢印</h3>
+    <h3 class="gpt2-subh">backward pass: 上から順に掛け算で降ろすだけ</h3>
     <p>
-      GPT-2 small には約 1 億 2 千万個の数値 (重み) があります。このうち 1 個の重み <code>w</code> をほんの少し動かすと、loss は上がるでしょうか、下がるでしょうか?
-      それを数字で表したのが勾配 \(\partial L / \partial w\) です:
+      素朴に「重みを微小に動かして loss の差分を見る」をやると、1 億個ぶんで forward を 2 億回走らせることになって現実的ではありません。そこで使うのが連鎖律 (chain rule) で、これを使うと全層の勾配が forward と同じオーダー (実装上はだいたい 2 倍) の計算量で一気に求まります。
     </p>
-    <ul>
-      <li>勾配が <code>+0.3</code> → 「w を 1 増やすと loss が 0.3 増える」 → w を減らすと loss が下がる</li>
-      <li>勾配が <code>−0.5</code> → 「w を 1 増やすと loss が 0.5 減る」 → w を増やすと loss が下がる</li>
-    </ul>
     <p>
-      つまり勾配の逆方向に動けば loss は下がります。
-      これを全パラメータに対して一気にやれば、1 ステップだけ「いまより少しマシ」な重みになります。
+      中身を直感だけで言うと、loss から始めて、上から順に「ローカルな微分」を 1 回ずつ掛けながら下の層に流すだけです。各層は「ひとつ上から渡された勾配」を受け取り、重みの勾配をその場に溜めつつ、入力側の勾配だけを下の層に渡します。数式で追いたい方は<a href="#appendix-backward">付録「backward の数式: 連鎖律と residual」</a>をどうぞ。
     </p>
 
-    <h3 class="gpt2-subh">backward pass — どうやって全層の勾配を求めるか</h3>
-    <p>
-      課題は、12 層も奥にある attention の重みについて、「これを動かしたら最終 loss がどう変わるか」をどう計算するかです。
-      素朴にやると重み 1 つにつき forward を 2 回 (微小に変えた版と元版) 走らせる必要があり、1 億個の重みで 2 億回 forward、現実的ではありません。
-    </p>
-
-    <p>
-      答えは連鎖律 (chain rule) です。高校数学で出てくる、合成関数の微分の「\((f \circ g)'(x) = f'(g(x)) \cdot g'(x)\)」のあれです。
-    </p>
-
-    <p>
-      まずは 2 層だけで考えてみます。入力 \(x\) が \(h = g(x)\) を経て \(L = f(h)\) になる系です:
-    </p>
-    \[
-      \begin{aligned}
-        \text{forward:}\quad
-          & x \xrightarrow{\ g\ } h \xrightarrow{\ f\ } L \\[6pt]
-        \text{backward:}\quad
-          & \frac{\partial L}{\partial h} = f'(h)
-          && (\text{\(f\) の微分だけで出る}) \\[2pt]
-          & \frac{\partial L}{\partial x} = \frac{\partial L}{\partial h} \cdot g'(x)
-          && (\text{連鎖律で、上流の勾配に \(g\) の微分を掛けるだけ})
-      \end{aligned}
-    \]
-
-    <p>
-      ここがポイントで、\(\partial L / \partial x\) を計算するのに一度求めた \(\partial L / \partial h\) を使い回せます。
-      何層あっても同じで、上から順に「次の層の勾配 × ローカルな微分」を掛け算で降ろしていくだけです。
-      loss から始めて、1 層ぶんだけ連鎖律を適用するのを繰り返すと、最終的に全層の勾配が埋まります。これが backward pass です。
-    </p>
-    <p>
-      GPT-2 の forward は <code>embed → Block 1 → ... → Block 12 → unembed → loss</code> という積み重ねです。
-      この逆順で、各層で「ローカルな微分」を 1 回ずつ掛けるだけなので、合計コストは forward と同じオーダーで済みます (実装上はだいたい forward の 2 倍で収まります)。
-    </p>
-
-    <p>図で見るとこんな感じです。上が loss、下が入力側 (embed) で、<strong>▼ の方向が backward の勾配の流れ</strong>です:</p>
+    <p>図で見るとこんな感じです。上が loss、下が入力側 (embed) で、▼ が backward の勾配の流れになります:</p>
 
     <div class="gpt2-grad" data-role="grad"></div>
 
-    <p>
-      各層は、<strong>ひとつ上の層から渡された勾配 \(\partial L / \partial (\text{自分の出力})\)</strong> を受け取り、
-      それにローカルな微分を掛けて \(\partial L / \partial (\text{自分の入力})\) と \(\partial L / \partial (\text{自分の重み})\) を出し、
-      入力側の勾配だけを<strong>ひとつ下の層に渡す</strong>、という仕事をします。
-      重みの勾配はその場で溜めておき、後で AdamW に渡されて更新に使われます。
-    </p>
-
     <h3 class="gpt2-subh">residual が勾配を守る</h3>
     <p>
-      深いモデルでは、連鎖律で勾配が「0 に近い数字の何層もの掛け算」になって消えてしまう (vanishing gradient) 問題があります。
-      ここで効くのが ④ で出てきた residual connection です。
-      残差接続があると勾配にも「足し算」ルートができます。数式で書くと:
-    </p>
-    \[
-      \frac{\partial L}{\partial x_\ell}
-      = \underbrace{\frac{\partial L}{\partial x_{\ell+1}}}_{\text{上の層の勾配}}
-        \cdot \bigl(\,\underbrace{1}_{\text{恒等路}}\,+\,\frac{\partial\,\text{block}}{\partial x_\ell}\bigr)
-    \]
-    <p class="gpt2-note">「+1」が勾配を守る恒等路になっていて、これのおかげで下の層まで信号が届きます。</p>
-    <p>
-      12 層積んでも最下流の embed まで信号が届くのは、この「+1 パス」が常に残るおかげです。
-      Transformer を深くできる主な理由の一つになっています。
+      深いモデルでは、連鎖律で勾配が「0 に近い数字の何層もの掛け算」になり、下の層まで届かず消えてしまう (vanishing gradient) 問題があります。ここで効くのが ④ で見た residual connection です。残差接続があると勾配にも「+1 の通り道」がくっつくので、ブロックが何層あっても信号が embed まで届きます。12 層積んでも学習できるのはこれのおかげで、Transformer を深くできる直接の根拠になっています (数式は<a href="#appendix-backward">付録</a>参照)。
     </p>
 
     <h3 class="gpt2-subh">重みを更新する — AdamW</h3>
     <p>
-      勾配が手に入ったら、あとは引き算するだけです。いちばん素朴な案は SGD:
-    </p>
-    \[
-      w \;\leftarrow\; w \,-\, \underbrace{\eta}_{\substack{\text{学習率} \\ (\text{例: } 0.0001)}} \cdot \underbrace{\frac{\partial L}{\partial w}}_{\text{勾配}}
-    \]
-    <p>
-      でも、実運用では AdamW (<a href="#ref-loshchilov2019">Loshchilov &amp; Hutter 2019</a>) が使われます。SGD の改良版で、次の 3 つを加えた代物です:
+      勾配が手に入ったら、あとは引き算するだけです。一番素朴な SGD なら「勾配に学習率を掛けて引く」で終わりです。実運用ではその改良版の AdamW (<a href="#ref-loshchilov2019">Loshchilov &amp; Hutter 2019</a>) が使われます。AdamW は 3 つの工夫を載せています:
     </p>
     <ul>
-      <li>
-        モメンタム: 過去の勾配の「移動平均」を使って進む。
-        坂道をボールが転がるイメージで、ガタつく方向の勾配は打ち消し合い、一貫した方向には慣性がつく
-      </li>
-      <li>
-        適応学習率: パラメータごとに過去の勾配の大きさで割り算する。
-        勾配が小さい重みには大きく、大きい重みには控えめに、と自動でスケール調整する
-      </li>
-      <li>
-        重み減衰 (weight decay): 毎ステップ重みをほんの少し 0 に引き寄せる。
-        過学習を抑える効果があり、Adam とは別枠で適用するのが AdamW の "W" の由来
-      </li>
+      <li>モメンタム: 過去の勾配の移動平均を使う。ガタつく方向は打ち消され、一貫した方向には慣性がつく</li>
+      <li>適応学習率: パラメータごとに、過去の勾配の大きさで割って歩幅を調整する</li>
+      <li>重み減衰 (weight decay): 毎ステップ重みを 0 にごくわずかに引き寄せる。過学習を抑える</li>
     </ul>
     <p>
-      さらに学習率自体もステップで動かします (warmup → cosine decay)。
-      最初の数千ステップでゼロから目標値まで徐々に上げ、そこから cosine 曲線でゆっくり下げていく方法です。
-      具体的な式や数値例は下の付録で扱います (なお GPT-2 原論文は optimizer や schedule の具体値をほぼ書いておらず、β2 = 0.95 / cosine to 10% / grad clip 1.0 / weight decay 0.1 は GPT-3 論文 Appendix B 以降のレシピで、本文・付録の数値はそれを下敷きにした nanoGPT 系の慣習です)。
+      さらに学習率自体もステップで動かすのが定番で、warmup で徐々に上げてから cosine でゆっくり下げます。AdamW の更新式や学習率の具体的な数値例は<a href="#appendix-adamw">付録「AdamW の更新式」</a>と<a href="#appendix-lr-schedule">付録「学習率スケジュール」</a>にまとめています。
     </p>
 
     <p class="gpt2-note">
-      以上が学習ループの 1 ステップです: forward → loss → backward → AdamW。
-      これを数十万回繰り返すうちに、初期はランダムだった重みが「文章を書ける」状態に収束していきます。
-      GPT-2 XL (1.5B) でも当時 V100 数百台 × 数週間で済んだというのが 2019 年当時の衝撃でした (2026 年のフロンティア LLM は数千 GPU × 数ヶ月、公表値ベースでも LLaMA 4 Scout で約 40T トークン規模、Gemma 4 や Qwen3.6 系は "trillions of tokens" とだけ公表されていますが、同じオーダーと見られます)。
+      以上が学習ループの 1 ステップで、forward → loss → backward → AdamW をひたすら繰り返します。これを数十万回回すうちに、初期はランダムだった重みが「文章を書ける」状態に収束していきます。GPT-2 XL (1.5B) でも当時 V100 数百台 × 数週間で済んだというのが 2019 年当時の衝撃でした (2026 年のフロンティア LLM は数千 GPU × 数ヶ月、LLaMA 4 Scout で約 40T トークン、Gemma 4 や Qwen3.6 系も trillions of tokens 規模)。
     </p>
+
+    <details class="gpt2-appendix" id="appendix-backward">
+      <summary><strong>付録</strong>backward の数式 — 連鎖律と residual</summary>
+      <div class="gpt2-appendix-body">
+        <p>
+          本文で「上から順に掛け算で降ろすだけ」と書いた backward の中身を、数式で追います。ベースになるのは高校数学の合成関数の微分、いわゆる連鎖律 (chain rule) です。
+        </p>
+        \[
+          (f \circ g)'(x) = f'(g(x)) \cdot g'(x)
+        \]
+        <p>
+          2 層のモデルで書いてみます。入力 \(x\) が \(h = g(x)\) を経て \(L = f(h)\) になる系です:
+        </p>
+        \[
+          \begin{aligned}
+            \text{forward:}\quad
+              & x \xrightarrow{\ g\ } h \xrightarrow{\ f\ } L \\[6pt]
+            \text{backward:}\quad
+              & \frac{\partial L}{\partial h} = f'(h)
+              && (\text{\(f\) の微分だけで出る}) \\[2pt]
+              & \frac{\partial L}{\partial x} = \frac{\partial L}{\partial h} \cdot g'(x)
+              && (\text{上流の勾配にローカルな微分を掛けるだけ})
+          \end{aligned}
+        \]
+        <p>
+          大事なのは、\(\partial L / \partial x\) を出すのに一度求めた \(\partial L / \partial h\) を使い回せる点です。何層あっても同じで、loss から始めて、1 層ぶんの連鎖律を繰り返し適用するうちに全層の勾配が埋まります。
+        </p>
+        <p>
+          GPT-2 の forward は <code>embed → Block 1 → ... → Block 12 → unembed → loss</code> という積み重ねなので、この逆順に 1 層ずつ連鎖律を効かせるだけで backward が終わります。各層は「ひとつ上から渡された勾配 \(\partial L / \partial (\text{自分の出力})\)」を受け取り、それにローカルな微分を掛けて \(\partial L / \partial (\text{自分の入力})\) と \(\partial L / \partial (\text{自分の重み})\) を出し、入力側の勾配だけをひとつ下の層に渡します。重みの勾配はその場で溜めておき、あとで AdamW に渡されて更新に使われます。
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">residual 接続が勾配を守る仕組み</h4>
+        <p>
+          残差接続があるブロックでは、出力 \(x_{\ell+1}\) は入力 \(x_\ell\) に block の結果を足す形になります:
+        </p>
+        \[
+          x_{\ell+1} = x_\ell + \text{block}(x_\ell)
+        \]
+        <p>
+          これに連鎖律をかけると、勾配はこう書けます:
+        </p>
+        \[
+          \frac{\partial L}{\partial x_\ell}
+          = \frac{\partial L}{\partial x_{\ell+1}}
+            \cdot \Bigl(\,\underbrace{1}_{\text{恒等路}}\,+\,\frac{\partial\,\text{block}}{\partial x_\ell}\Bigr)
+        \]
+        <p>
+          右辺カッコの中の「+1」がポイントで、block 側の微分が小さくても、恒等路の +1 が残ることで、\(\partial L / \partial x_\ell\) が上から来た \(\partial L / \partial x_{\ell+1}\) とほぼ同じ大きさで下に届きます。12 層積んでも勾配が消えないのはこれのおかげです。
+
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">更新は SGD が最も素朴</h4>
+        <p>
+          勾配が揃ったら、あとは引き算です。一番素朴なのが SGD (Stochastic Gradient Descent):
+        </p>
+        \[
+          w \;\leftarrow\; w \,-\, \eta \cdot \frac{\partial L}{\partial w}
+        \]
+        <p>
+          学習率 \(\eta\) (例: \(10^{-4}\)) を勾配に掛けて引くだけです。実運用では SGD そのままではなく、モメンタムや適応学習率を足した AdamW を使うのが一般的で、その詳細は<a href="#appendix-adamw">付録「AdamW の更新式」</a>に続きます。
+        </p>
+      </div>
+    </details>
 
     <details class="gpt2-appendix">
       <summary><strong>付録</strong>softmax + CE の勾配 <code>p − y</code> を導出してみる</summary>
@@ -1321,7 +1303,7 @@ extra_head:
       </div>
     </details>
 
-    <details class="gpt2-appendix">
+    <details class="gpt2-appendix" id="appendix-adamw">
       <summary><strong>付録</strong>AdamW の更新式を 1 ステップ分追う</summary>
       <div class="gpt2-appendix-body">
         <p>
@@ -1365,7 +1347,7 @@ extra_head:
       </div>
     </details>
 
-    <details class="gpt2-appendix">
+    <details class="gpt2-appendix" id="appendix-lr-schedule">
       <summary><strong>付録</strong>学習率スケジュール — warmup → cosine decay</summary>
       <div class="gpt2-appendix-body">
         <p>
@@ -1492,19 +1474,12 @@ step 600,000:  η = 2.5e-5        (最小, 10%)</code></pre>
             <td>4 時間 10 分</td>
             <td>checkpoint + W&amp;B ログ</td>
           </tr>
-          <tr>
-            <td>4</td>
-            <td>HuggingFace に push</td>
-            <td>Modal</td>
-            <td>1 分</td>
-            <td>公開モデル repo</td>
-          </tr>
         </tbody>
       </table>
     </div>
 
     <p>
-      合計でだいたい 5 時間、コストは Modal の A100 80GB ($2.50/hr) を中心に 10〜13 ドルくらいに収まります。しかも Modal には月 $30 の無料枠があるので、下の <a href="#practice-infra">インフラのセクション</a> で紹介する smoke test (5 分) くらいなら実質無料です。
+      合計でだいたい 5 時間、コストは Modal の A100 80GB ($2.50/hr) を中心に 10〜13 ドルくらいに収まります。
     </p>
   </section>
 
@@ -1580,7 +1555,7 @@ def train_fn(...):
       学習ログの可視化と実験管理は <a href="https://wandb.ai/">Weights &amp; Biases (W&amp;B)</a> に流します。これは <code>wandb.init(project=..., name=...)</code> で run を作ると、loss も lr も生成サンプルも全部 web 上のダッシュボードで見られるサービスです。今回は run の URL を public にしてあるので、後半の <a href="#practice-results">結果のセクション</a> で実物を貼ります。
     </p>
     <p>
-      重みの配布は <a href="https://huggingface.co/">HuggingFace Hub</a> です。学習が終わったら <code>state_dict</code> を Hub に push しておけば、誰でも <code>GPT2LMHeadModel.from_pretrained("sakasegawa/gpt2-jp-small")</code> で読めます。Modal + W&amp;B + HuggingFace の 3 点セットは、いまの「個人が事前学習をやる」最小構成だと思っています。
+      重みの配布は <a href="https://huggingface.co/">HuggingFace Hub</a> です。学習が終わったら <code>state_dict</code> を Hub に push しておけば、誰でも <code>GPT2LMHeadModel.from_pretrained("sakasegawa/gpt2-jp-small")</code> で読めます。
     </p>
   </section>
 
@@ -1642,12 +1617,12 @@ def train_fn(...):
     </div>
 
     <p>
-      この差はそのままコンテキスト長と学習コストに効いてきます。英語の GPT-2 が 1024 トークンで原稿用紙 2 枚弱を扱うのと同じ感覚で日本語を扱うには、日本語側のトークナイザを別に用意したほうが今回の学習設計では圧倒的に効率的、というのが結論です (同じ 1024 トークンのコンテキストに 2〜3 倍の日本語を詰め込めるうえ、同じ学習予算でカバーできるコーパス量も比例して増えます)。
+      この差はそのままコンテキスト長と学習コストに効いてきます。英語の GPT-2 が 1024 トークンで原稿用紙 2 枚弱を扱うのと同じ感覚で日本語を扱うには、日本語側のトークナイザを別に用意したほうが今回の学習設計では効率的です (同じ 1024 トークンのコンテキストに 2〜3 倍の日本語を詰め込めるうえ、同じ学習予算でカバーできるコーパス量も比例して増えます)。
     </p>
 
     <h3 class="gpt2-subh">アルゴリズムの選択: SentencePiece unigram</h3>
     <p>
-      日本語向けに自前のサブワードを切る選択肢はいくつかあります (BPE, unigram, WordPiece など)。今回は SentencePiece の unigram モデルを選びました。理由は:
+      日本語向けに自前のサブワードを切る選択肢はいくつかあります (BPE, unigram, WordPiece など)。今回は SentencePiece の unigram モデルを選びました。rinna さんの <a href="https://huggingface.co/rinna/japanese-gpt2-medium">japanese-gpt2-medium</a> など、過去の日本語 GPT 系でも SentencePiece が採用されてきた流れに沿った選択でもあります。理由は:
     </p>
     <ul>
       <li>日本語は単語境界が明示されないので、空白前トークン化を前提とする手法 (普通の BPE) より、生テキストをそのまま食わせられる SentencePiece の方が素直</li>
@@ -1684,7 +1659,7 @@ spm.SentencePieceTrainer.Train(
     </p>
 
     <p>
-      ローカル環境 (16 GB RAM) で unigram 学習をかけたら OOM したので、Modal で 64 GB マシンを借りて回しました。実時間で 17 分くらいです。生成された <code>tokenizer.model</code> は 800 KB の小さなファイルなので、後段の学習スクリプトでも HuggingFace push の際にも、これをそのまま同梱します。
+      Modal で 64 GB マシンを借りて回しました。実時間で 17 分くらいです。生成された <code>tokenizer.model</code> は 800 KB の小さなファイルなので、後段の学習スクリプトでも HuggingFace push の際にも、これをそのまま同梱します。
     </p>
   </section>
 
@@ -1708,15 +1683,15 @@ spm.SentencePieceTrainer.Train(
       言い換えると、\(N = 110\text{M}\) のパラメータを持つモデルを「与えられた計算量で最大限賢く」するには、だいたい \(110\text{M} \times 20 = 2.2\text{B}\) トークンを食わせるのが筋、という指針です。これより少ないと underfit (データが足りず賢くなりきらない)、多いと overfit ではなく単に計算効率が悪くなる (同じ計算を使って、\(N\) を大きくした方が loss が下がった)、というのがこの論文の主張の核でした。
     </p>
     <p>
-      なので今回も Chinchilla 則を素直に採用します。目標は \(110\text{M} \times 20 = 2.2\text{B}\) トークン。キリの良いところで 2.3B トークンに切りました。一方で 2026 年現在のフロンティア事前学習は、推論コスト優先で Chinchilla 比の 5〜20 倍のデータを食わせる (「Chinchilla 超え」) のが普通になっていますが、これは「学習コストは一回だけど、推論は永遠にやるので、推論時に速い小さめのモデルを、データで腕力で賢くする」経済合理性の話です。教材として 1 から動かすなら Chinchilla ちょうどを選ぶのが一番素直です。
+      なので今回も Chinchilla 則を素直に採用します。目標は \(110\text{M} \times 20 = 2.2\text{B}\) トークン。キリの良いところで 2.3B トークンに切りました。
     </p>
 
     <h3 class="gpt2-subh">コーパス: FineWeb-2-edu-japanese</h3>
     <p>
-      2.3B トークンを何から取るか、が次の問題です。ここは <a href="https://huggingface.co/datasets/hotchpotch/fineweb-2-edu-japanese">hotchpotch/fineweb-2-edu-japanese</a> の <code>sample_10BT</code> サブセットをそのまま使わせてもらいました。このデータセットは <a href="https://secon.dev/entry/2025/02/20/100000-fineweb-2-edu-japanese/">hotchpotch 氏 (@hotchpotch, Tateno Yuichi) が 2025-02-20 の記事</a>で公開したもので、HuggingFace 公式の多言語 web コーパス FineWeb-2 の日本語版 (376M 件) を、DeepSeek で作った「教育的価値スコア」の教師データで分類器 (<a href="https://huggingface.co/hotchpotch/fineweb-2-edu-japanese-classifier">fineweb-2-edu-japanese-classifier</a>) を学習させ、その分類器でスコア 2.5 以上の文書だけを残して作られています (結果およそ 120M 件 / 89.3B トークン)。
+      2.3B トークンを何から取るか、が次の問題です。ここは <a href="https://huggingface.co/datasets/hotchpotch/fineweb-2-edu-japanese">hotchpotch/fineweb-2-edu-japanese</a> の <code>sample_10BT</code> サブセットをそのまま使わせてもらいました。このデータセットは <a href="https://secon.dev/entry/2025/02/20/100000-fineweb-2-edu-japanese/">セコンさん (@hotchpotch) が 2025-02-20 の記事</a>で公開したもので、HuggingFace 公式の多言語 web コーパス FineWeb-2 の日本語版 (376M 件) を、DeepSeek で作った「教育的価値スコア」の教師データで分類器 (<a href="https://huggingface.co/hotchpotch/fineweb-2-edu-japanese-classifier">fineweb-2-edu-japanese-classifier</a>) を学習させ、その分類器でスコア 2.5 以上の文書だけを残して作られています (結果およそ 120M 件 / 89.3B トークン)。
     </p>
     <p>
-      英語には元々同系列の FineWeb-Edu があって、「Common Crawl をそのまま食わせるより、教育文書っぽく抽出したサブセットの方が同じトークン数でも性能が伸びる」というのは先行研究で知られていました。日本語には該当するものが長らく無かったので、今回の 110M スケールだと一番ありがたい選択肢になっています。hotchpotch 氏に感謝。
+      英語には元々同系列の FineWeb-Edu があって、「Common Crawl をそのまま食わせるより、教育文書っぽく抽出したサブセットの方が同じトークン数でも性能が伸びる」というのは先行研究で知られていました。日本語には該当するものが長らく無かったので、今回の 110M スケールだと一番ありがたい選択肢になっています。
     </p>
     <p>
       実装上は <code>sample_10BT</code> を streaming でロードして、先頭 500 万トークンを val にとってから、残りを train として 2.3B トークンに到達するまで詰め込みます。tokenize は SentencePiece の <code>Encode(batch, num_threads=16)</code> でバッチ並列化してあるので、Modal の 16 CPU で 22 分程度です。
@@ -2086,20 +2061,14 @@ ids = tok("日本の首都は", return_tensors="pt").input_ids
 y = model.generate(ids, max_new_tokens=50, top_k=40, do_sample=True)
 print(tok.decode(y[0], skip_special_tokens=True))</code></pre>
 
-    <h3 class="gpt2-subh">W&amp;B project を public にする</h3>
+    <h3 class="gpt2-subh">W&amp;B の学習ログ</h3>
     <p>
-      W&amp;B の方は project の Privacy 設定を Open に変えるだけで、loss curve も生成サンプルの Table も全部 public で読めるようになります。今回は次の URL で公開しています:
+      loss curve と生成サンプルの Table は W&amp;B に上げていて、誰でも読めるように public にしてあります。学習中の挙動をそのまま眺めたい方はどうぞ:
     </p>
     <ul>
       <li>Project: <a href="https://wandb.ai/nyosegawa-mushoku/gpt2-jp-from-scratch">wandb.ai/nyosegawa-mushoku/gpt2-jp-from-scratch</a></li>
       <li>Run (本番): <a href="https://wandb.ai/nyosegawa-mushoku/gpt2-jp-from-scratch/runs/cpn804ot">wandb.ai/.../runs/cpn804ot</a></li>
     </ul>
-    <p>
-      W&amp;B は Report 機能で「グラフを iframe で外部サイトに埋め込む」こともできるのですが、本記事ではそこは省略しました。代わりに jsonl をローカルに同梱して自前 canvas で描画しています。理由は単純で、iframe はオフラインで読めないし、blog の見た目とも揃わないからです。記事内で「実物を見たい人はリンクを踏んでね」、それ以外は自前描画、というハイブリッドが今回はちょうど良かったです。
-    </p>
-    <p class="gpt2-note">
-      なお記事中の数値の「裏付け」は HuggingFace の README / model card には置いていません (これは自分で書いた二次記述なので、記事の検証材料にはなりません)。再現性のソースは次の 3 つです: (1) W&amp;B run (上のリンク) の生ログ、(2) 同梱の <code>training_log.jsonl</code> と <code>EVAL_POINTS</code>、(3) <a href="https://github.com/nyosegawa/gpt2-jp-from-scratch/blob/main/scripts/04_push_to_hub.py"><code>gpt2-jp-from-scratch/scripts/04_push_to_hub.py</code></a> + <code>karpathy/nanoGPT</code> / <code>huggingface/transformers</code> の一次ソース。
-    </p>
   </section>
 
   <section id="practice-next" class="gpt2-section">
@@ -2124,10 +2093,6 @@ print(tok.decode(y[0], skip_special_tokens=True))</code></pre>
       <li>事前学習後に SFT (instruction tuning) を 1 〜 2 epoch 入れる。生成サンプルの「役立ち感」が一気に変わる</li>
       <li>vLLM や SGLang に gpt2-jp-small を載せて、KV cache 込みで推論ベンチマークを取ってみる (Part 1 の <a href="#generate">生成ループ — 一語ずつ伸ばす</a> で触れた話の実測)</li>
     </ul>
-    <p>
-      とはいえ、まずは「自分で 1 から GPT-2 を動かす」ところまで来ました。Part 1 で「行列積と softmax の積み重ね」と書いたのを、Part 3 では <code>q @ k.transpose(-2, -1) * (1.0 / math.sqrt(head_dim))</code> として実コードで眺めて、しかもそれが実際に loss を下げる様子を W&amp;B で見たわけです。フロンティアモデルと同じ地図を、同じ縮尺で歩いた感じが少しでも伝わっていたら嬉しいです。
-    </p>
-
     <p class="gpt2-practice-thanks">
       ここまで読んでくださってありがとうございました。記事や実装に間違いを見つけたら、リポジトリの issue か <a href="https://x.com/gyakuse">@gyakuse</a> までこっそり教えてください。
     </p>
@@ -2166,7 +2131,7 @@ print(tok.decode(y[0], skip_special_tokens=True))</code></pre>
       <li id="ref-cheng2016">Cheng et al. (2016). <a href="https://arxiv.org/abs/1601.06733">Long Short-Term Memory-Networks for Machine Reading</a>. Self-Attention の初期例</li>
       <li id="ref-lin2017">Lin et al. (2017). <a href="https://arxiv.org/abs/1703.03130">A Structured Self-Attentive Sentence Embedding</a>. Self-Attention を用いた文表現</li>
       <li id="ref-he2016">He et al. (2016). <a href="https://arxiv.org/abs/1512.03385">Deep Residual Learning for Image Recognition</a>. ResNet, 残差接続</li>
-      <li id="ref-elhage2021">Elhage et al. (2021). <a href="https://transformer-circuits.pub/2021/framework/index.html">A Mathematical Framework for Transformer Circuits</a>. residual stream の定式化</li>
+      <li id="ref-elhage2021">Elhage et al. (2021). <a href="https://transformer-circuits.pub/2021/framework/index.html">A Mathematical Framework for Transformer Circuits</a>. 残差ストリームの定式化</li>
       <li id="ref-dettmers2022">Dettmers et al. (2022). <a href="https://arxiv.org/abs/2208.07339">LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale</a>. 外れ値 (outlier features) の解析</li>
     </ul>
 
