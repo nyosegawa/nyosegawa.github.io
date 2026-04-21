@@ -1,0 +1,116 @@
+{
+  "d_model": 768,
+  "n_layer": 12,
+  "n_head": 12,
+  "vocab_size": 50257,
+  "prompts": [
+    {
+      "slug": "capital",
+      "label": "The capital of France is",
+      "prompt": "The capital of France is",
+      "seq_len": 5,
+      "tokens": [
+        {
+          "id": 464,
+          "text": "The"
+        },
+        {
+          "id": 3139,
+          "text": " capital"
+        },
+        {
+          "id": 286,
+          "text": " of"
+        },
+        {
+          "id": 4881,
+          "text": " France"
+        },
+        {
+          "id": 318,
+          "text": " is"
+        }
+      ]
+    },
+    {
+      "slug": "once-upon",
+      "label": "Once upon a time,",
+      "prompt": "Once upon a time,",
+      "seq_len": 5,
+      "tokens": [
+        {
+          "id": 7454,
+          "text": "Once"
+        },
+        {
+          "id": 2402,
+          "text": " upon"
+        },
+        {
+          "id": 257,
+          "text": " a"
+        },
+        {
+          "id": 640,
+          "text": " time"
+        },
+        {
+          "id": 11,
+          "text": ","
+        }
+      ]
+    },
+    {
+      "slug": "hello",
+      "label": "Hello, my name is",
+      "prompt": "Hello, my name is",
+      "seq_len": 5,
+      "tokens": [
+        {
+          "id": 15496,
+          "text": "Hello"
+        },
+        {
+          "id": 11,
+          "text": ","
+        },
+        {
+          "id": 616,
+          "text": " my"
+        },
+        {
+          "id": 1438,
+          "text": " name"
+        },
+        {
+          "id": 318,
+          "text": " is"
+        }
+      ]
+    },
+    {
+      "slug": "fox",
+      "label": "The quick brown fox",
+      "prompt": "The quick brown fox",
+      "seq_len": 4,
+      "tokens": [
+        {
+          "id": 464,
+          "text": "The"
+        },
+        {
+          "id": 2068,
+          "text": " quick"
+        },
+        {
+          "id": 7586,
+          "text": " brown"
+        },
+        {
+          "id": 21831,
+          "text": " fox"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+---
+layout: layouts/base.vto
+title: Study LLM — GPT-2 から現代 Coding Agent まで
+description: LLM の内部を可視化と実践で解き明かす連載。
+bodyClass: body-series
+url: /series/study-llm/
+extra_head:
+  - |
+    <style>
+      body.body-series main {
+        max-width: min(100% - 6vw, 48em);
+        padding: 2em 3vw 4em;
+        font-family: var(--font-ui);
+        color: var(--color-text);
+        line-height: 1.8;
+      }
+      .series-eyebrow {
+        font-size: 0.8em;
+        letter-spacing: 0.2em;
+        color: var(--color-base);
+        text-transform: uppercase;
+        margin: 0 0 0.3em;
+      }
+      .series-hero h1 {
+        font-size: 2.2em;
+        margin: 0 0 0.4em;
+        color: var(--color-heading);
+      }
+      .series-lede {
+        font-size: 1.08em;
+        max-width: 36em;
+        margin: 0 0 1.2em;
+      }
+      .series-meta {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 2em;
+        font-size: 0.92em;
+        color: var(--color-text-muted, #666);
+      }
+      .series-meta li {
+        margin: 0.2em 0;
+      }
+      .series-part {
+        margin: 2.2em 0 0;
+      }
+      .series-part-head {
+        font-size: 1.05em;
+        letter-spacing: 0.05em;
+        color: var(--color-base);
+        margin: 0 0 0.6em;
+      }
+      .series-episode {
+        display: block;
+        padding: 1em 1.2em;
+        border: 1px solid var(--color-line);
+        border-radius: 6px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s;
+      }
+      .series-episode:hover {
+        border-color: var(--color-base);
+      }
+      .series-episode-num {
+        font-size: 0.82em;
+        letter-spacing: 0.1em;
+        color: var(--color-base);
+        text-transform: uppercase;
+      }
+      .series-episode-title {
+        font-size: 1.1em;
+        color: var(--color-heading);
+        margin: 0.2em 0 0.3em;
+      }
+      .series-episode-desc {
+        font-size: 0.95em;
+        color: var(--color-text-muted, #666);
+        margin: 0;
+      }
+      .series-upcoming {
+        margin: 2.5em 0 0;
+        padding: 1em 1.2em;
+        border: 1px dashed var(--color-line);
+        border-radius: 6px;
+        font-size: 0.95em;
+        color: var(--color-text-muted, #666);
+      }
+    </style>
+---
+
+<article class="series-doc">
+  <header class="series-hero">
+    <p class="series-eyebrow">Series</p>
+    <h1>Study LLM — GPT-2 から現代 Coding Agent まで</h1>
+    <p class="series-lede">
+      LLM の内部を、可視化と実践の二本足で解き明かしていく連載です。
+      Pretraining の基礎から、Transformer を疑うアーキテクチャ、応用、そして Coding Agent まで、読者が自分の手で動かして確かめられる粒度で追いかけます。
+    </p>
+    <ul class="series-meta">
+      <li>基準日: 2026-04-20</li>
+      <li>想定読者: LLM の API を叩いたことがあり、PyTorch か HuggingFace Transformers を少し触ったことがある人</li>
+    </ul>
+  </header>
+
+  <section class="series-part">
+    <h2 class="series-part-head">Part 0 · プロローグ</h2>
+    <a href="/series/study-llm/gpt-2/" class="series-episode">
+      <span class="series-episode-num">Ep00</span>
+      <p class="series-episode-title">ゼロから作る日本語 LLM — GPT-2 の推論・学習の可視化から Modal での事前学習まで</p>
+      <p class="series-episode-desc">
+        トークン化から生成ループまでを事前計算トレースで段階的に可視化し、最後に日本語コーパスから GPT-2 small を Modal で事前学習します。
+      </p>
+    </a>
+  </section>
+
+  <p class="series-upcoming">
+    続話は順次公開予定です。
+  </p>
+</article>

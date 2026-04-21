@@ -30,6 +30,11 @@ site.copy("img");
 site.copy("CNAME");
 site.copy("icon.png");
 
+// GPT-2 visualization: serve app.js, style.css, and JSON traces as static assets
+site.copy("series/study-llm/gpt-2/app.js");
+site.copy("series/study-llm/gpt-2/style.css");
+site.copy("series/study-llm/gpt-2/data");
+
 // Auto-set OG image for posts based on slug. JA uses /og/{slug}.jpg, EN uses /og/en/{slug}.jpg
 site.preprocess([".md"], (pages) => {
   for (const page of pages) {
@@ -236,8 +241,9 @@ site.process([".html"], (pages) => {
       }
     }
 
-    // Add copy button to code blocks
+    // Add copy button to code blocks (skip mermaid diagrams)
     doc.querySelectorAll("pre").forEach((pre) => {
+      if (pre.classList.contains("mermaid")) return;
       const btn = doc.createElement("button");
       btn.className = "copy-btn";
       btn.textContent = "Copy";

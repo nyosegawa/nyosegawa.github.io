@@ -1,0 +1,141 @@
+[
+  {
+    "text": "吾輩は猫である。名前はまだ無い。",
+    "char_count": 16,
+    "sp_tokens": 11,
+    "sp_ratio_chars_per_token": 1.4545454545454546,
+    "sp_pieces": [
+      "▁",
+      "吾",
+      "輩",
+      "は",
+      "猫",
+      "である",
+      "。",
+      "名前",
+      "はまだ",
+      "無い",
+      "。"
+    ],
+    "gpt2_bpe_tokens": 24,
+    "gpt2_bpe_ratio_chars_per_token": 0.6666666666666666,
+    "gpt2_compression_win": 2.1818181818181817
+  },
+  {
+    "text": "人工知能(AI)の発展により、世界は大きく変わりつつある。",
+    "char_count": 29,
+    "sp_tokens": 13,
+    "sp_ratio_chars_per_token": 2.230769230769231,
+    "sp_pieces": [
+      "▁",
+      "人工知能",
+      "(",
+      "AI",
+      ")",
+      "の発展",
+      "により",
+      "、",
+      "世界",
+      "は大きく",
+      "変わり",
+      "つつある",
+      "。"
+    ],
+    "gpt2_bpe_tokens": 42,
+    "gpt2_bpe_ratio_chars_per_token": 0.6904761904761905,
+    "gpt2_compression_win": 3.230769230769231
+  },
+  {
+    "text": "こんにちは、世界！今日も良い天気ですね。",
+    "char_count": 20,
+    "sp_tokens": 12,
+    "sp_ratio_chars_per_token": 1.6666666666666667,
+    "sp_pieces": [
+      "▁",
+      "こんにちは",
+      "、",
+      "世界",
+      "!",
+      "今日",
+      "も",
+      "良い",
+      "天気",
+      "です",
+      "ね",
+      "。"
+    ],
+    "gpt2_bpe_tokens": 31,
+    "gpt2_bpe_ratio_chars_per_token": 0.6451612903225806,
+    "gpt2_compression_win": 2.5833333333333335
+  },
+  {
+    "text": "東京特許許可局長許可局長の話をしよう。",
+    "char_count": 19,
+    "sp_tokens": 11,
+    "sp_ratio_chars_per_token": 1.7272727272727273,
+    "sp_pieces": [
+      "▁東京",
+      "特許",
+      "許可",
+      "局長",
+      "許可",
+      "局長",
+      "の",
+      "話",
+      "を",
+      "しよう",
+      "。"
+    ],
+    "gpt2_bpe_tokens": 41,
+    "gpt2_bpe_ratio_chars_per_token": 0.4634146341463415,
+    "gpt2_compression_win": 3.727272727272727
+  },
+  {
+    "text": "The quick brown fox jumps over the lazy dog.",
+    "char_count": 44,
+    "sp_tokens": 20,
+    "sp_ratio_chars_per_token": 2.2,
+    "sp_pieces": [
+      "▁The",
+      "▁",
+      "qu",
+      "ick",
+      "▁b",
+      "rown",
+      "▁f",
+      "ox",
+      "▁",
+      "j",
+      "ump",
+      "s",
+      "▁",
+      "over",
+      "▁the",
+      "▁la",
+      "zy",
+      "▁d",
+      "og",
+      "."
+    ],
+    "gpt2_bpe_tokens": 10,
+    "gpt2_bpe_ratio_chars_per_token": 4.4,
+    "gpt2_compression_win": 0.5
+  },
+  {
+    "text": "日本の首都は東京です。",
+    "char_count": 11,
+    "sp_tokens": 6,
+    "sp_ratio_chars_per_token": 1.8333333333333333,
+    "sp_pieces": [
+      "▁日本の",
+      "首都",
+      "は",
+      "東京",
+      "です",
+      "。"
+    ],
+    "gpt2_bpe_tokens": 17,
+    "gpt2_bpe_ratio_chars_per_token": 0.6470588235294118,
+    "gpt2_compression_win": 2.8333333333333335
+  }
+]
