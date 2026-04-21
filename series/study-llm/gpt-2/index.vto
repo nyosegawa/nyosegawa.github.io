@@ -1814,12 +1814,12 @@ for it in range(max_iters):
       nanoGPT 風の <code>state_dict</code> をそのまま置くと <code>transformers</code> 側からは形が合いません。理由は、nanoGPT の attention・MLP 射影が <code>nn.Linear</code> (<code>weight.shape = (out, in)</code>) なのに対し、HF の <code>GPT2LMHeadModel</code> は内部で <code>Conv1D</code> (<code>weight.shape = (in, out)</code>) を使っていて、向きが逆だからです (<a href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py">huggingface/transformers/.../modeling_gpt2.py</a>)。さらに <code>bias=False</code> で学習しているので Conv1D / LayerNorm の bias 用にゼロを埋める必要があります。tokenizer 側も <code>tokenizer.model</code> (SentencePiece) を 1 ファイル置いただけだと <code>AutoTokenizer</code> が tokenizer class を解決できないので、最低限 <code>tokenizer_config.json</code> を 1 つ足してやる必要があります。
     </p>
     <p>
-      まとめると、HF 互換に push する前に必要な手続きはこの 3 つです (<code>scripts/convert_to_hf_gpt2.py</code> として同梱しています):
+      まとめると、HF 互換に push する前に必要な手続きはこの 3 つです (学習レポ <a href="https://github.com/nyosegawa/gpt2-jp-from-scratch/blob/main/scripts/04_push_to_hub.py"><code>scripts/04_push_to_hub.py</code></a> に Modal ジョブとしてまとめてあります):
     </p>
     <pre class="gpt2-code-block"><code class="language-python">TRANSPOSE = ("attn.c_attn.weight", "attn.c_proj.weight",
              "mlp.c_fc.weight",  "mlp.c_proj.weight")
 
-sd = torch.load("ckpt.pt", map_location="cpu", weights_only=True)
+sd = torch.load("ckpt_best.pt", map_location="cpu", weights_only=False)["model"]
 sd = {k.removeprefix("_orig_mod."): v for k, v in sd.items()}
 sd = {k: v for k, v in sd.items()
       if not k.endswith(("attn.bias", "attn.masked_bias"))}
@@ -1829,15 +1829,19 @@ for k in list(sd):
 
 cfg = GPT2Config(vocab_size=32000, n_positions=1024, n_embd=768,
                  n_layer=12, n_head=12,
-                 bos_token_id=1, eos_token_id=2)
+                 bos_token_id=1, eos_token_id=1,  # SP の <|endoftext|> = 1
+                 tie_word_embeddings=True)
 model = GPT2LMHeadModel(cfg)
 model.load_state_dict(sd, strict=False)  # bias 系の missing は zero 埋めで OK
-model.save_pretrained(out_dir)
+model.save_pretrained(out_dir)            # ← model.safetensors と config.json
 
-# SentencePiece を AutoTokenizer から読めるように LlamaTokenizer でラップする
+# SentencePiece を AutoTokenizer から読めるように LlamaTokenizer でラップする。
+# 特殊トークンは SP 側に最初から入っている ID をそのまま使う
+# (id 0: <unk>, id 1: <|endoftext|>, id 2: <|pad|>)
 tok = LlamaTokenizer(vocab_file="tokenizer.model",
-                     bos_token="<s>", eos_token="</s>",
-                     unk_token="<unk>", pad_token="<pad>")
+                     bos_token="<|endoftext|>", eos_token="<|endoftext|>",
+                     unk_token="<unk>", pad_token="<|pad|>",
+                     add_bos_token=False, add_eos_token=False, legacy=False)
 tok.save_pretrained(out_dir)  # ← tokenizer_config.json などを書き出す
 
 HfApi().upload_folder(folder_path=out_dir,
@@ -1847,7 +1851,7 @@ HfApi().upload_folder(folder_path=out_dir,
     </p>
     <ul>
       <li>nanoGPT の <code>Linear</code> 重みを HF <code>Conv1D</code> の向きに転置する。対象は <code>attn.c_attn</code>, <code>attn.c_proj</code>, <code>mlp.c_fc</code>, <code>mlp.c_proj</code> の 4 種類だけ (nanoGPT 自身の <code>from_pretrained</code> でも逆方向で同じ転置が走っています)</li>
-      <li><code>tokenizer.model</code> 単体だと <code>AutoTokenizer</code> が tokenizer class を解決できないので、<code>LlamaTokenizer</code> (SentencePiece backend) でラップして <code>save_pretrained</code> する。これで <code>tokenizer_config.json</code> と <code>special_tokens_map.json</code> が生成され、利用側は <code>AutoTokenizer.from_pretrained</code> 1 行で読めるようになる</li>
+      <li><code>tokenizer.model</code> 単体だと <code>AutoTokenizer</code> が tokenizer class を解決できないので、<code>LlamaTokenizer</code> (SentencePiece backend) でラップして <code>save_pretrained</code> する。これで <code>tokenizer_config.json</code> と <code>special_tokens_map.json</code> が生成され、利用側は <code>AutoTokenizer.from_pretrained</code> 1 行で読めるようになる。特殊トークンは SP の語彙に最初から入っている ID (0: <code>&lt;unk&gt;</code>, 1: <code>&lt;|endoftext|&gt;</code>, 2: <code>&lt;|pad|&gt;</code>) を再利用するのが大事で、新しいトークンを足してしまうと埋め込み行列のサイズを超えて IndexError になります</li>
       <li><code>README.md</code> に「学習データ」「ハイパーパラメータ」「使い方」「val loss」を書いておく。これがそのままモデルカードになる</li>
     </ul>
     <p>
@@ -1875,7 +1879,7 @@ print(tok.decode(y[0], skip_special_tokens=True))</code></pre>
       W&amp;B は Report 機能で「グラフを iframe で外部サイトに埋め込む」こともできるのですが、本記事ではそこは省略しました。代わりに jsonl をローカルに同梱して自前 canvas で描画しています。理由は単純で、iframe はオフラインで読めないし、blog の見た目とも揃わないからです。記事内で「実物を見たい人はリンクを踏んでね」、それ以外は自前描画、というハイブリッドが今回はちょうど良かったです。
     </p>
     <p class="gpt2-note">
-      なお記事中の数値の「裏付け」は HuggingFace の README / model card には置いていません (これは自分で書いた二次記述なので、記事の検証材料にはなりません)。再現性のソースは次の 3 つです: (1) W&amp;B run (上のリンク) の生ログ、(2) 同梱の <code>training_log.jsonl</code> と <code>EVAL_POINTS</code>、(3) <code>scripts/convert_to_hf_gpt2.py</code> + <code>karpathy/nanoGPT</code> / <code>huggingface/transformers</code> の一次ソース。
+      なお記事中の数値の「裏付け」は HuggingFace の README / model card には置いていません (これは自分で書いた二次記述なので、記事の検証材料にはなりません)。再現性のソースは次の 3 つです: (1) W&amp;B run (上のリンク) の生ログ、(2) 同梱の <code>training_log.jsonl</code> と <code>EVAL_POINTS</code>、(3) <a href="https://github.com/nyosegawa/gpt2-jp-from-scratch/blob/main/scripts/04_push_to_hub.py"><code>gpt2-jp-from-scratch/scripts/04_push_to_hub.py</code></a> + <code>karpathy/nanoGPT</code> / <code>huggingface/transformers</code> の一次ソース。
     </p>
   </section>
 
