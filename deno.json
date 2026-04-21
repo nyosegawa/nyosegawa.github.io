@@ -1,6 +1,6 @@
 {
   "imports": {
-    "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.2.1/",
+    "lume/": "https://cdn.jsdelivr.net/gh/nyosegawa/lume@0deb7b0594d6be12fca9bc001beaf6ab30cfdeca/",
     "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.14/jsx-runtime.ts",
     "blog/": "https://cdn.jsdelivr.net/gh/lumeland/theme-simple-blog@1.16.2/",
     "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.14.15/"
@@ -63,7 +63,7 @@
   ],
   "lint": {
     "plugins": [
-      "https://cdn.jsdelivr.net/gh/lumeland/lume@3.2.1/lint.ts"
+      "https://cdn.jsdelivr.net/gh/nyosegawa/lume@0deb7b0594d6be12fca9bc001beaf6ab30cfdeca/lint.ts"
     ],
     "rules": {
       "exclude": [
