@@ -9,6 +9,7 @@ const state = {
   currentSlug: null,
   attnLayer: 0,
   attnHead: 0,
+  attnFocusPos: 0,
   temperature: 1.0,
   topK: 20,
   topP: 1.0,
@@ -454,6 +455,62 @@ attn[${i}][j] = exp(z_j) / Σ_k exp(z_k)</code></pre>
   `;
 }
 
+function renderAttnMix() {
+  const root = document.querySelector('[data-role="attn-mix"]');
+  if (!root) return;
+  const layer = state.attnLayer;
+  const head = state.attnHead;
+  const attn = state.trace.layers[layer].attention[head];
+  const seq = state.trace.seq_len;
+  const tokens = state.trace.tokens;
+  const i = clamp(state.attnFocusPos, 0, seq - 1);
+
+  const posInput = document.querySelector('[data-role="attn-mix-pos"]');
+  posInput.max = seq - 1;
+  posInput.value = i;
+  document.querySelector('[data-role="attn-mix-pos-value"]').textContent = i;
+  document.querySelector('[data-role="attn-mix-pos-tok"]').textContent = showSpace(tokens[i].text);
+
+  const bars = document.querySelector('[data-role="attn-mix-bars"]');
+  bars.innerHTML = "";
+  const row = attn[i];
+  const maxV = Math.max(0.001, ...row.slice(0, i + 1));
+  for (let j = 0; j < seq; j++) {
+    const cell = document.createElement("div");
+    cell.className = "gpt2-attn-mix-bar-cell";
+    if (j > i) cell.classList.add("is-future");
+    if (j === i) cell.classList.add("is-focus");
+    const v = row[j];
+    const hPct = j <= i ? (v / maxV) * 100 : 0;
+    const box = document.createElement("div");
+    box.className = "gpt2-attn-mix-bar-box";
+    const fill = document.createElement("div");
+    fill.className = "gpt2-attn-mix-bar-fill";
+    fill.style.height = `${hPct}%`;
+    box.appendChild(fill);
+    const tokEl = document.createElement("div");
+    tokEl.className = "gpt2-attn-mix-bar-tok";
+    tokEl.textContent = showSpace(tokens[j].text);
+    const wEl = document.createElement("div");
+    wEl.className = "gpt2-attn-mix-bar-w";
+    wEl.textContent = j <= i ? v.toFixed(2) : "—";
+    cell.appendChild(box);
+    cell.appendChild(tokEl);
+    cell.appendChild(wEl);
+    bars.appendChild(cell);
+  }
+
+  const formula = document.querySelector('[data-role="attn-mix-formula"]');
+  const top = row
+    .map((v, j) => [v, j])
+    .filter(([v, j]) => j <= i && v >= 0.005)
+    .sort((a, b) => b[0] - a[0])
+    .slice(0, 6);
+  const parts = top.map(([v, j]) => `${v.toFixed(2)}·V<sub>${j}</sub>(${showSpace(tokens[j].text)})`);
+  const extra = top.length < row.slice(0, i + 1).filter(v => v >= 0.005).length ? " + …" : "";
+  formula.innerHTML = `出力<sub>${i}</sub> ≈ ${parts.join(" + ") || "-"}${extra}`;
+}
+
 function renderAttention() {
   const layer = state.attnLayer;
   const head = state.attnHead;
@@ -506,6 +563,7 @@ function renderAttention() {
     heat.appendChild(row);
   }
 
+  renderAttnMix();
   renderAttnMath();
 }
 
@@ -1313,12 +1371,18 @@ async function selectPrompt(slug) {
   state.trace = await loadTrace(slug);
   state.attnLayer = 0;
   state.attnHead = 0;
+  state.attnFocusPos = state.trace.seq_len - 1;
   state.genStep = 0;
   state.genPlaying = false;
   state.embedFocus = 0;
   state.tokFocus = null;
   document.querySelector('[data-role="attn-layer"]').value = 0;
   document.querySelector('[data-role="attn-head"]').value = 0;
+  const mp = document.querySelector('[data-role="attn-mix-pos"]');
+  if (mp) {
+    mp.max = state.trace.seq_len - 1;
+    mp.value = state.attnFocusPos;
+  }
   document.querySelector('[data-role="gen-step"]').value = 0;
   document.querySelector('[data-role="gen-step"]').max = state.trace.generation.length;
   renderAll();
@@ -1347,6 +1411,13 @@ function wireControls() {
     state.attnHead = +ah.value;
     renderAttention();
   });
+  const amp = document.querySelector('[data-role="attn-mix-pos"]');
+  if (amp) {
+    amp.addEventListener("input", () => {
+      state.attnFocusPos = +amp.value;
+      renderAttnMix();
+    });
+  }
   const temp = document.querySelector('[data-role="temp"]');
   temp.addEventListener("input", () => {
     state.temperature = +temp.value;

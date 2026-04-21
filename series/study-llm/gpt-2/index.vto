@@ -75,6 +75,9 @@ extra_head:
       <div class="gpt2-toc-cols">
         <div class="gpt2-toc-col">
           <h3 class="gpt2-toc-part-h">Part 1: 推論編</h3>
+          <ul class="gpt2-toc-list gpt2-toc-list-nonum">
+            <li><a href="#overview">推論の全体像 — 1 回の forward で 1 トークン</a></li>
+          </ul>
           <ol class="gpt2-toc-list">
             <li><a href="#tokenize">Tokenize — 文字列をトークン列に</a></li>
             <li><a href="#embed">Embed — ID をベクトルに</a></li>
@@ -86,6 +89,9 @@ extra_head:
         </div>
         <div class="gpt2-toc-col">
           <h3 class="gpt2-toc-part-h">Part 2: 学習編</h3>
+          <ul class="gpt2-toc-list gpt2-toc-list-nonum">
+            <li><a href="#train-overview">学習の全体像 — forward → loss → backward → update</a></li>
+          </ul>
           <ol class="gpt2-toc-list" start="7">
             <li><a href="#train-task">学習タスク — 次のトークンを当てるだけ</a></li>
             <li><a href="#train-teacher">Teacher forcing — 並列化の鍵</a></li>
@@ -130,6 +136,23 @@ extra_head:
     <p class="gpt2-current" data-role="current-prompt"></p>
   </section>
 
+  <section id="overview" class="gpt2-section">
+    <h2>推論の全体像 — 1 回の forward で 1 トークン</h2>
+    <p>
+      GPT-2 が「入力文字列から次の 1 トークンを出す」までにやっていることは、ざっくり 5 段階です。先に大枠を眺めておきます。
+    </p>
+    <ol class="gpt2-overview-list">
+      <li><strong>分割</strong>: 文字列を整数の列 (トークン ID) に切る。ニューラルネットは文字を直接食えないため</li>
+      <li><strong>ベクトル化</strong>: 各 ID を 768 次元ベクトルに変換し、位置情報も足す。語の意味と語順を 1 本のベクトルに乗せるため</li>
+      <li><strong>文脈を取り込む</strong>: 各位置が他の位置の情報を集めながら、同じ処理 (Attention + MLP) を 12 回重ねる。次のトークンを当てるには自分だけでなく前後の文脈が必要なため</li>
+      <li><strong>確率化</strong>: 最終位置のベクトルを語彙サイズ (50,257) に戻し、softmax で確率分布にしてから 1 トークン選ぶ</li>
+      <li><strong>ループ</strong>: 出たトークンを入力の末尾に足してまた 1 に戻る。長文を生成するには、これを何十〜何百回と繰り返す</li>
+    </ol>
+    <p>
+      1 つ混同しやすいのが、<strong>Attention の重みそのものは「次のトークンの確率」ではない</strong>という点です。最終的な確率分布は 4 の softmax で初めて出てきます。途中の attention 行列は「位置同士で情報をどう混ぜるか」に使う別物です。
+    </p>
+  </section>
+
   <section id="tokenize" class="gpt2-section">
     <h2>① Tokenize — 文字列をトークン列に</h2>
     <p>
@@ -165,6 +188,93 @@ extra_head:
         <p>
           GPT-2 は厳密には <em>byte-level BPE</em> を使っています。Unicode 文字ではなく UTF-8 バイトから始めるので、絵文字でも中国語でも同じ枠組みで扱えます。
           後続の GPT-3, GPT-4, LLaMA 3, 2026 年時点の Gemma 4 や Qwen3.6-35B-A3B など、OSS/クローズドを問わずフロンティアモデルは基本的に BPE 系 (あるいは同じく sub-word 単位の sentencepiece) を使い続けています。
+        </p>
+      </div>
+    </details>
+
+    <details class="gpt2-appendix">
+      <summary><strong>付録</strong>50,257 という語彙サイズはどこから来たのか</summary>
+      <div class="gpt2-appendix-body">
+        <p>
+          GPT-2 の語彙が 50,257 個、というのはなんとも中途半端な数字に見えます。切りのいい 50,000 でもなく、2 の累乗の 65,536 でもありません。
+          実はこの数字、3 つの足し算で綺麗に説明がつきます。
+        </p>
+        <pre class="gpt2-code-block"><code>   256   ← 1 バイトで表現できる全パターン (0x00 〜 0xFF)
+ 50,000   ← 学習で得た BPE merges の数
+      1   ← 特殊トークン &lt;|endoftext|&gt;
+─────────
+ 50,257</code></pre>
+        <p>
+          最初の 256 は byte-level BPE のセーフティネットです。どんな文字列も最悪 1 バイトずつバラせば必ず表現できる、という安全装置で、語彙の低 ID 側はこの「生のバイト」に充てられます。実際に GPT-2 のトーカナイザで ID 0, 1, 2 をデコードすると、それぞれ <code>!</code>, <code>"</code>, <code>#</code> (バイトでいうと <code>0x21</code>, <code>0x22</code>, <code>0x23</code>) が出てきます。
+        </p>
+        <p>
+          次の 50,000 は、OpenAI が WebText 上で BPE を 50,000 回マージして増やした語彙です。「マージ回数 = 新しく作るトークン数」なので、回数を増やせば語彙もそのぶん増える、という単純な関係です。この 50,000 という数字は論文本文で明示されていますが、特別深い根拠があるわけではなく、WebText のサイズと当時の計算資源から選ばれた実用的な落としどころ、という感じです (<a href="#ref-radford2019">Radford+ 2019</a>)。
+        </p>
+        <p>
+          最後の 1 個は <code>&lt;|endoftext|&gt;</code> で、語彙末尾の ID 50256 に 1 つだけ置かれています。学習時には「WebText 文書の区切り」、推論時には「生成を止める合図」を兼ねる特殊トークンです。GPT-2 はこの特殊トークンを 1 個しか持たない、というのが地味に大事なポイントで、GPT-3.5 以降の chat モデルで <code>&lt;|im_start|&gt;</code>, <code>&lt;|im_end|&gt;</code>, tool 呼び出し用トークンなどがどんどん増えていくのと対照的です。
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">語彙を実際に覗いてみる</h4>
+        <p>
+          語彙の中身は ID の位置によってはっきりと性質が変わります。低い ID は生のバイト、真ん中あたりは WebText で頻出するサブワード、最後が特殊トークン、という並びです。
+        </p>
+        <table class="gpt2-history">
+          <thead>
+            <tr><th>ID</th><th>token</th><th>性質</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td><code>!</code></td><td>生のバイト (0x21)</td></tr>
+            <tr><td>257</td><td><code>" a"</code> (先頭スペース込み)</td><td>最頻出級なので早い段階で merge された</td></tr>
+            <tr><td>262</td><td><code>" the"</code></td><td>同上</td></tr>
+            <tr><td>286</td><td><code>" of"</code></td><td>同上</td></tr>
+            <tr><td>15496</td><td><code>"Hello"</code></td><td>そこそこ頻出する英単語</td></tr>
+            <tr><td>50255</td><td><code>" gazed"</code></td><td>末尾付近は低頻度の珍しい merge</td></tr>
+            <tr><td>50256</td><td><code>&lt;|endoftext|&gt;</code></td><td>最後に 1 個だけ足された特殊トークン</td></tr>
+          </tbody>
+        </table>
+        <p>
+          低 ID にバイト、大きい ID に長い merge、という並び順は BPE の学習履歴そのものを反映しています。<code>" the"</code> が ID 262 に座っているのは偶然ではなく、WebText 上で最も早くマージされるべきペアだった、という証拠です。
+        </p>
+        <p>
+          一方で英語以外の文字列は、この語彙の中ではかなり贅沢にトークンを使います。GPT-2 のトーカナイザで「東京」をエンコードすると 4 トークン (<code>[30266, 109, 12859, 105]</code>)、「日本」も 4 トークン、絵文字「🎉」も 3 トークンになります。UTF-8 で 1 文字 3 バイトある漢字が、WebText にほとんど出てこないので merge されずに生のバイトのまま残った結果です。英語テキストがほぼ 1 単語 1 トークンで済むのとはだいぶ違う世界で、この偏りが「日本語モデルには日本語専用の tokenizer を用意したほうが効率がいい」と言われる一番の理由です (実際 Part 3 では SentencePiece で日本語特化トーカナイザを 0 から学習します)。
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">vocab サイズの流派の変遷</h4>
+        <p>
+          では語彙サイズは何を基準に決めればいいのか、というとこれが結構バラバラで、時期とモデルによって流派があります。
+        </p>
+        <table class="gpt2-history">
+          <thead>
+            <tr><th>モデル</th><th>リリース</th><th>vocab サイズ</th><th>tokenizer</th></tr>
+          </thead>
+          <tbody>
+            <tr class="gpt2-history-hl"><td>GPT-2</td><td>2019</td><td>50,257</td><td>byte-level BPE (50K merges + 1 特殊)</td></tr>
+            <tr><td>GPT-3</td><td>2020</td><td>50,257</td><td>GPT-2 と完全に同一</td></tr>
+            <tr><td>LLaMA / LLaMA-2</td><td>2023</td><td>32,000</td><td>SentencePiece BPE</td></tr>
+            <tr><td>GPT-4o</td><td>2024</td><td>200,019</td><td>tiktoken <code>o200k_base</code></td></tr>
+            <tr><td>LLaMA-3</td><td>2024</td><td>128,256</td><td>tiktoken 系</td></tr>
+            <tr><td>Qwen3.6-35B-A3B (OSS)</td><td>2026</td><td>248,320</td><td>BPE (<code>Qwen2Tokenizer</code>)</td></tr>
+            <tr><td>Gemma 4-31B (OSS)</td><td>2026</td><td>262,144</td><td>SentencePiece</td></tr>
+          </tbody>
+        </table>
+        <p>
+          vocab を増やすと 1 トークンあたりの情報密度が上がります。特に日本語・中国語のような「1 文字が UTF-8 で 3 バイト」な言語では、小さい vocab だと 1 文字が 3 トークンに分解されてしまう (さっきの「東京 → 4 トークン」がまさにこれです) のが、vocab を広げて非 ASCII の merge をたくさん持てば 1 文字 1 トークンに近づきます。
+        </p>
+        <p>
+          一方で埋め込み行列 <code>W<sub>E</sub></code> のパラメータ数は vocab に比例します。GPT-2 の 768 次元で計算してみると、50,257 vocab で約 38.6M、128,256 vocab だと約 98.5M、200,019 vocab に至っては約 153.6M のパラメータが vocab 表だけで消費される計算です。小さいモデルにとってはこの重さが致命的で、たとえば Part 3 で日本語コーパスから学習する 110M モデルでは SentencePiece の 32K vocab を選んでいます。本体 110M のうちに vocab 表で 150M を足すとモデル本体より vocab 表のほうが重くなってしまう、というバランスの悪さを避けるためです。
+        </p>
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">vocab scaling law と「BPE 以後」の議論 (2024-2026)</h4>
+        <p>
+          「言語カバー」と「モデル総パラメータ予算」のトレードオフは 2026 年時点でも活発に議論されていて、2024-2026 にかけて流れが 2 つの方向に分岐しています。
+        </p>
+        <p>
+          1 つ目は「vocab はまだ全然足りていない」派です。Tao+ 2024 は IsoFLOPs 実験から vocab の scaling law を導出し、たとえば LLaMA2-70B は実際の 32K ではなく 216K vocab が計算予算に対して最適だった (7 倍の過小設計!) と予測しました (<a href="#ref-tao2024">Tao+ 2024</a>)。翌年の Huang+ 2025 は入力 vocab と出力 vocab を分離した上で「input vocab を 128 倍に広げると 400M モデルが 1B モデルと同性能に追いつく」ことを示し、vocab を「幅」「深さ」と並ぶ第 3 のスケール軸として位置付け直しました (<a href="#ref-huang2025">Huang+ 2025</a>)。プロダクションの採用例もこの方向に足並みを揃えていて、2024 年以降のフロンティアはほぼ全部 100K 超え、上の表で見たように Gemma 4 や Qwen3.6 は 250K 前後まで来ています。
+        </p>
+        <p>
+          2 つ目は「そもそも BPE ごと捨ててしまおう」派です。Meta が 2024 年末に出した Byte Latent Transformer (BLT) は固定トーカナイザを使わず、バイト列を「次バイトのエントロピー」で動的にパッチ分割するアーキテクチャで、8B パラメータ / 4T bytes のスケールで LLaMA 3 相当の性能 + 推論効率優位を達成しています (<a href="#ref-pagnoni2024">Pagnoni+ 2024</a>)。「バイトから入ってトークン境界をモデル自身に学ばせる」という方針は後続の研究にも波及していて、BPE の設計そのものが研究レベルでは問い直されつつあります。
+        </p>
+        <p>
+          2026 年 4 月時点でこの 2 派の勝負はまだ決着していません。商用の開発現場は BPE 大 vocab 側が優勢で、OSS フロンティアが軒並み 100K〜262K まで来ている状況ですが、理論・研究側は byte-level 回帰の勢いも強い、というのが現状の景色です。GPT-2 が採った「50K merges + 1 特殊」という 2019 年の設計は、どちらの視点から見ても「もう古いバランス」と再解釈されつつある、と考えておくとちょうどいい解像度になります。
         </p>
       </div>
     </details>
@@ -326,9 +436,42 @@ extra_head:
   <section id="attention" class="gpt2-section">
     <h2>③ Attention — 過去を振り返る</h2>
     <p>
-      ここからが Transformer の心臓部です。各トークン位置が、過去のどのトークンを「どれだけ見るか」の重みを自分で計算します。
-      マスク付き Self-Attention なので、未来のトークンは見えません (図の右上が 0 になっています)。
-      行の合計は 1 です。
+      ここからが Transformer の心臓部です。② で作った 768 次元のベクトル列 (<code>x<sub>0</sub></code>、長さ N × 次元 768) がこのステップに入ってきて、同じ形 (N × 768) のベクトル列が出ていきます。ただし中身は書き換わっていて、各位置のベクトルに「過去の位置の情報」が混ざり込んでいる、というのがこのステップで起きることです。
+    </p>
+    <p>
+      各位置でやっていることはシンプルで、自分と自分より前の位置 (causal なので未来は見ない) のベクトルを重み付きで足し合わせて、新しい出力ベクトルを作ります。重みは位置ごとに変わって、相性のいい位置ほど大きな値を持ちます。たとえば i=5 の位置なら、位置 0〜5 の計 6 本のベクトルに対して重みが 1 つずつ決まり、その合計はちょうど 1 になります (具体的な重み分布は、このあと本物のデータで動かせます)。
+    </p>
+
+    <h3 class="gpt2-subh">どうやって重みを決めるか — Q/K/V</h3>
+    <p>
+      相性を測るために、各位置の 768 次元ベクトルは 3 つの 64 次元ベクトルに分岐します (64 という数字は 768 / 12 で、後述の 12 ヘッド分の取り分です)。呼び方はそれぞれ Query (Q)、Key (K)、Value (V) で、どれも元のベクトルに別々の行列を掛けて作るだけです。役割はこんな感じです:
+    </p>
+    <ul>
+      <li><strong>Q (Query)</strong>: 「いま自分は何を探しているか」を表すベクトル</li>
+      <li><strong>K (Key)</strong>: 「自分は何を提供できるか」の看板となるベクトル</li>
+      <li><strong>V (Value)</strong>: 「実際に渡す情報」の中身となるベクトル</li>
+    </ul>
+    <p>
+      「位置 5 が位置 2 をどれだけ見るか」は、位置 5 の Q と位置 2 の K の相性 (具体的には内積) で決まります。これを全位置ペアについて一気に計算すると、「どの位置がどの位置をどれだけ見るか」の N × N 行列ができあがります。これを softmax に通して行ごとに合計が 1 の重みにし、その重みで全位置の V を加重平均する、というのがこのステップの正味の中身です。数式で書くと 1 行で済むので、興味があれば下の付録「Attention の式とスケーリングの意味」で見てください。
+    </p>
+    <p>
+      重要なのは、この処理が全位置同時に 1 回の行列積で書けることです。N 個の位置を順番に処理する必要がなく、行列をドンと 1 回掛けるだけで N 位置すべての出力が同時に出てくる、というのが Attention が GPU 時代に大勝ちした直接の理由で、RNN では到底真似できなかった性質です (このあたりは下の歴史的付録で掘り下げています)。
+    </p>
+
+    <h3 class="gpt2-subh">マスクで未来を隠す</h3>
+    <p>
+      GPT-2 は「次のトークンを予測する」モデルなので、位置 i は位置 i+1 以降を見てはいけません (見たら答え合わせが見えてしまってカンニング状態になります)。これを保証するため、N × N の attention 行列の右上三角 (未来の位置) を softmax 前に -∞ で埋めて、softmax 後の重みを 0 にします。これが「マスク付き (causal) Self-Attention」で、下のヒートマップの右上が真っ白なのはこれが効いているからです。
+    </p>
+
+    <h3 class="gpt2-subh">Multi-Head と、学習で決まる射影</h3>
+    <p>
+      Q/K/V を作る 3 つの射影行列と、最後に加重平均した V を 768 次元に戻す 1 つの射影行列、計 4 つの行列は全部学習で決まります。「何を探すべきか」「何を看板として出すべきか」「実際に何を渡すか」「混ぜ戻した結果をどう使うか」までデータから学ぶ、というのが Attention の本質で、重み自体は人間が設計していません。
+    </p>
+    <p>
+      さらに GPT-2 small は、この Q/K/V の仕組みを 1 層あたり 12 並列で持ちます (Multi-Head Attention)。12 個の Head がそれぞれ別の Q/K/V 射影を持ち、それぞれ別の「注目の切り口」を学ぶので、あるヘッドは直前の単語を強く見て、別のヘッドは主語と動詞の対応を見て、などの分業が自然に発生することが解析で知られています (<a href="#ref-elhage2021">Elhage+ 2021</a>)。
+    </p>
+    <p>
+      前置きが長くなりましたが、ここからは実データで眺めます。まずプロンプト全体の N × N attention ヒートマップ、その下で「1 行を拡大」して棒グラフで見ます (位置 i のスライダーで注目元の行を選べます)。Layer / Head を動かすと、Head ごとに注目パターンの性格がはっきり変わるのが見えます:
     </p>
     <div class="gpt2-attn-controls">
       <label>
@@ -342,6 +485,7 @@ extra_head:
         <span data-role="attn-head-value">0</span> / 11
       </label>
     </div>
+
     <div class="gpt2-attn" data-role="attn">
       <div class="gpt2-attn-heat" data-role="attn-heat"></div>
       <div class="gpt2-attn-legend">
@@ -351,9 +495,23 @@ extra_head:
       </div>
     </div>
     <p class="gpt2-note">
-      行 i 列 j のマスは「位置 i が位置 j をどれだけ見るか」を表します。Layer/Head を動かすと、
-      Head ごとに性格が違うのがわかります (直前を強く見る Head、構文的に遠い語を見る Head など)。
+      行 i 列 j のマスは「位置 i が位置 j をどれだけ見るか」を表します。行の合計は 1、右上三角は causal マスクで全部 0 です。
     </p>
+
+    <div class="gpt2-attn-mix" data-role="attn-mix">
+      <div class="gpt2-attn-mix-header">
+        位置 <code data-role="attn-mix-pos-tok">-</code> (i=<span data-role="attn-mix-pos-value">0</span>) の attention 重み分布
+        <small>— 上のヒートマップの i 行目を拡大したもの。赤 = 自分、青 = 過去、薄グレー = 未来 (causal mask で 0)</small>
+      </div>
+      <div class="gpt2-attn-mix-control">
+        <label>
+          位置 i
+          <input type="range" min="0" max="0" value="0" data-role="attn-mix-pos">
+        </label>
+      </div>
+      <div class="gpt2-attn-mix-bars" data-role="attn-mix-bars"></div>
+      <div class="gpt2-attn-mix-formula" data-role="attn-mix-formula"></div>
+    </div>
 
     <details class="gpt2-appendix">
       <summary><strong>付録</strong>実際の数値で追う — Attention の重みはこう決まる</summary>
@@ -362,6 +520,51 @@ extra_head:
           現在の Layer/Head で、特定の位置 (行) がどう重みを配分しているかを、裏の softmax 計算まで逆算しながら眺めます。
         </p>
         <div data-role="attn-math"></div>
+      </div>
+    </details>
+
+    <details class="gpt2-appendix">
+      <summary><strong>付録</strong>なぜ Attention が必要になったか — 2014 から 2017 までの流れ</summary>
+      <div class="gpt2-appendix-body">
+        <p>
+          GPT-2 が当然のように Attention を使っていますが、これは 2019 年時点ですでに 5 年越しの発明品です。なぜこの仕組みが Transformer の心臓に座ったのか、を理解するには、その前にあった RNN 時代の悩みを一緒に見ておくと腑に落ちます。
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">Attention 以前: RNN の「1 本のホース問題」</h4>
+        <p>
+          2014 年頃の機械翻訳の主流は Sequence-to-Sequence (seq2seq) でした (<a href="#ref-sutskever2014">Sutskever+ 2014</a>)。仕組みはシンプルで、英文をまず RNN (LSTM) に 1 単語ずつ食わせて、最後に出てきた隠れ状態 1 本 (数百〜千次元のベクトル) に「英文の意味」を全部詰め込み、それを別の RNN に渡してフランス語を 1 単語ずつ吐き出させる、という構成です。
+        </p>
+        <p>
+          この設計には根本的な欠陥がありました。「意味を詰め込む 1 本のベクトル」は固定長なので、英文が 5 単語でも 50 単語でも同じ器に入れなければいけません。長い文ほど情報が溢れて翻訳精度が落ちる、という実害が観測されていて、ベンチマーク上も文長が伸びるほど BLEU スコアがずるずると下がる、という典型的な失敗モードがありました。1 本のホースで川を流そうとして詰まる、みたいなイメージです。
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">Bahdanau 2014: 「最後のベクトル 1 本」を諦める</h4>
+        <p>
+          この問題に最初に切り込んだのが Bahdanau+ 2014 です (<a href="#ref-bahdanau2014">Bahdanau+ 2014</a>)。アイデアは、「最後の 1 本」に情報を圧縮するのではなく、エンコーダ側が各単語ごとに出した隠れ状態を全部保持しておいて、デコーダが単語を 1 つ生成するたびに「いまどの入力単語が関連しているか」を都度計算して重み付き和で取り出す、というものでした。
+        </p>
+        <p>
+          この「どれくらい関連しているか」を出す機構が、最初の Attention です。論文中では <em>alignment model</em> と呼ばれていて、「decoder が出力単語 i を生成しているとき、encoder の入力単語 j にどれだけ注目するか」を学習可能な重みとして出力する作りでした。翻訳精度が長文で劇的に改善し、ボトルネック問題が消えたことが目に見える成果になりました。翌年の Luong+ 2015 (<a href="#ref-luong2015">Luong+ 2015</a>) が global/local attention などの派生を整理して、Attention は seq2seq の標準装備になっていきます。
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">Self-Attention: 外向きから内向きへ</h4>
+        <p>
+          ここまでの Attention は「encoder と decoder のあいだ」で使うものでした。これを「同じ系列の中」で使い始めたのが Self-Attention です。Cheng+ 2016 (<a href="#ref-cheng2016">Cheng+ 2016</a>) や Lin+ 2017 (<a href="#ref-lin2017">Lin+ 2017</a>) あたりで「文中の単語同士で関連度を計算する」アイデアが現れ、RNN の隠れ状態に Self-Attention を組み合わせた構成がいくつも提案されます。ただこの時点ではまだ「RNN の補助として Attention を添える」という位置付けでした。
+        </p>
+
+        <h4 style="margin:1.2em 0 0.4em;font-size:1em;">2017 "Attention Is All You Need": RNN を捨てる</h4>
+        <p>
+          Transformer の論文は、この流れの最終形として出てきました (<a href="#ref-vaswani2017">Vaswani+ 2017</a>)。「Self-Attention だけで seq2seq を作れば、RNN そのものを取り除いても翻訳精度が出る」という大胆な提案で、タイトル <em>Attention Is All You Need</em> がそれをそのまま言い切っています。
+        </p>
+        <p>
+          これが勝ち筋になった理由は 2 つあります。
+        </p>
+        <ul>
+          <li><strong>GPU で並列化できる</strong>: RNN は定義上「時刻 t の計算は t-1 が終わるまで始められない」という時系列依存があり、GPU で並列化しにくい構造でした。Self-Attention は系列の全位置を同時に行列積 1 発で計算できるので GPU がフル稼働でき、学習速度が桁違いに上がります</li>
+          <li><strong>長距離依存が 1 ホップで繋がる</strong>: RNN では「50 単語離れた情報」は隠れ状態を 50 回経由する必要があり、途中で勾配が消えたり情報が薄れたりしました。Self-Attention なら任意の 2 位置間が attention 行列の 1 エントリで直接結ばれるので、距離に関係なく同じコストで情報を運べます</li>
+        </ul>
+        <p>
+          GPT-2 が 2019 年に出てくる頃には、この Transformer 流のやり方を decoder-only 構成にして「次のトークンを予測する」だけに特化したモデルが盛んに試されていました。上の図の ③ で見ている Masked Self-Attention は、まさにこの系譜 (Bahdanau 2014 → Vaswani 2017 → GPT-2) の直系の子孫で、2026 年の Claude Opus 4.7 や GPT-5.4 に至るまでこの骨格は変わっていません。「ここ 10 年の LLM 進化のほぼ全部が、Attention の上に積み上がっている」と言っても大げさではありません。
+        </p>
       </div>
     </details>
 
@@ -400,8 +603,10 @@ extra_head:
     <h2>④ 12 層を積む — ブロックは何をしているのか</h2>
 
     <p>
-      ここまでで、入力は位置情報込みの 768 次元ベクトル列 <code>x<sub>0</sub></code> になりました。
-      このベクトル列が、同じ形のブロックを 12 回くぐります。これが GPT-2 small の本体です。
+      ③ で眺めた Attention は、実は 12 層あるブロックのうち 1 つの中で行われている 1 回ぶんの計算でした。ヒートマップの Layer スライダーで 0 から 11 まで動かせたのも、まさにこの 12 個の別々の Attention を切り替えて見ていたからです。ここからはカメラを引いて、その Attention が「1 ブロック」の中でどう組み合わされているか、そしてブロックがどう 12 個積み上がって GPT-2 small の本体を作っているかを見ていきます。
+    </p>
+    <p>
+      入口は ② で作った 768 次元のベクトル列 <code>x<sub>0</sub></code> で変わりません。これが同じ形のブロックを 12 回くぐって、同じ形のまま出てくる、というのがここから眺める構造です。
     </p>
 
     <h3 class="gpt2-subh">1 ブロックのしていること</h3>
@@ -410,9 +615,7 @@ extra_head:
     </p>
     <ol class="gpt2-block-steps">
       <li>
-        Attention: 他の位置の情報を混ぜ込む。各位置のベクトルが、過去の位置のベクトルを「重み付きで足し合わせた結果」を受け取ります。
-        重みは ③ でやった softmax の結果で、行の合計が 1 です。
-        ここで初めて「位置同士の情報のやりとり」が起きます
+        Attention: ③ で見た通り、各位置が自分と過去の位置のベクトルを加重平均した結果を受け取ります。ここで「位置同士の情報のやりとり」が起きる、というのが 1 つ目の仕事です
       </li>
       <li>
         MLP: 各位置で独立に変換する。各位置のベクトルに、2 層の全結合ネットワーク (<code>768 → 3,072 → 768</code>) を適用します。
@@ -663,6 +866,22 @@ extra_head:
       次トークン予測というシンプルなタスクと、それを GPU 上で効率よく回す工夫の話です。
     </p>
   </aside>
+
+  <section id="train-overview" class="gpt2-section">
+    <h2>学習の全体像 — forward → loss → backward → update の繰り返し</h2>
+    <p>
+      推論が「入力 → forward → 次のトークン」で終わるのに対して、学習は 1 ステップが 4 段階に分かれていて、それをひたすら回し続けるループです。
+    </p>
+    <ol class="gpt2-overview-list">
+      <li><strong>forward</strong>: 推論と同じ forward pass で、各位置の次トークン確率分布を出す</li>
+      <li><strong>loss</strong>: 出た分布と「本当の次のトークン」を比較して、cross-entropy でズレを数値化する。正解に尖った分布ほど loss が小さい</li>
+      <li><strong>backward</strong>: loss を下げるには各重みをどう動かせばいいかを、勾配として逆伝播で計算する</li>
+      <li><strong>update</strong>: 勾配を使って AdamW optimizer が重みを少しだけ動かす。これを何千〜何億ステップ繰り返す</li>
+    </ol>
+    <p>
+      1 ステップ単位では「確率分布を正解に近づくよう微調整する」だけの地味な操作です。でも、これを何兆トークンぶん繰り返した結果として、モデルが文法や世界知識を持っているように振る舞うようになる、というのが LLM 事前学習の骨格です。
+    </p>
+  </section>
 
   <section id="train-task" class="gpt2-section">
     <h2>⑦ 学習タスク — 次のトークンを当てるだけ</h2>
@@ -1931,6 +2150,9 @@ print(tok.decode(y[0], skip_special_tokens=True))</code></pre>
     <h3 class="gpt2-subh">トークナイゼーションと位置エンコーディング</h3>
     <ul>
       <li id="ref-sennrich2016">Sennrich et al. (2016). <a href="https://arxiv.org/abs/1508.07909">Neural Machine Translation of Rare Words with Subword Units</a>. BPE</li>
+      <li id="ref-tao2024">Tao et al. (2024). <a href="https://arxiv.org/abs/2407.13623">Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies</a>. 最適 vocab サイズの scaling law (LLaMA2-70B は 216K vocab が最適と予測)</li>
+      <li id="ref-huang2025">Huang et al. (2025, ICML). <a href="https://arxiv.org/abs/2501.16975">Over-Tokenized Transformer: Vocabulary is Generally Worth Scaling</a>. 入力/出力 vocab の分離と log-linear scaling (input vocab 128× で 400M→1B 相当)</li>
+      <li id="ref-pagnoni2024">Pagnoni et al. (2024). <a href="https://arxiv.org/abs/2412.09871">Byte Latent Transformer: Patches Scale Better Than Tokens</a>. Meta の tokenizer-free byte-level モデル (BLT)</li>
       <li id="ref-raffel2020">Raffel et al. (2020). <a href="https://arxiv.org/abs/1910.10683">Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer</a>. T5, 相対位置</li>
       <li id="ref-su2021">Su et al. (2021). <a href="https://arxiv.org/abs/2104.09864">RoFormer: Enhanced Transformer with Rotary Position Embedding</a>. RoPE</li>
       <li id="ref-press2022">Press et al. (2022). <a href="https://arxiv.org/abs/2108.12409">Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation</a>. ALiBi</li>
@@ -1938,6 +2160,11 @@ print(tok.decode(y[0], skip_special_tokens=True))</code></pre>
 
     <h3 class="gpt2-subh">Attention / Residual / 内部解析</h3>
     <ul>
+      <li id="ref-sutskever2014">Sutskever et al. (2014). <a href="https://arxiv.org/abs/1409.3215">Sequence to Sequence Learning with Neural Networks</a>. RNN encoder-decoder (seq2seq) 原論文</li>
+      <li id="ref-bahdanau2014">Bahdanau et al. (2014). <a href="https://arxiv.org/abs/1409.0473">Neural Machine Translation by Jointly Learning to Align and Translate</a>. 最初の Attention (alignment model)</li>
+      <li id="ref-luong2015">Luong et al. (2015). <a href="https://arxiv.org/abs/1508.04025">Effective Approaches to Attention-based Neural Machine Translation</a>. global/local attention の整理</li>
+      <li id="ref-cheng2016">Cheng et al. (2016). <a href="https://arxiv.org/abs/1601.06733">Long Short-Term Memory-Networks for Machine Reading</a>. Self-Attention の初期例</li>
+      <li id="ref-lin2017">Lin et al. (2017). <a href="https://arxiv.org/abs/1703.03130">A Structured Self-Attentive Sentence Embedding</a>. Self-Attention を用いた文表現</li>
       <li id="ref-he2016">He et al. (2016). <a href="https://arxiv.org/abs/1512.03385">Deep Residual Learning for Image Recognition</a>. ResNet, 残差接続</li>
       <li id="ref-elhage2021">Elhage et al. (2021). <a href="https://transformer-circuits.pub/2021/framework/index.html">A Mathematical Framework for Transformer Circuits</a>. residual stream の定式化</li>
       <li id="ref-dettmers2022">Dettmers et al. (2022). <a href="https://arxiv.org/abs/2208.07339">LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale</a>. 外れ値 (outlier features) の解析</li>
