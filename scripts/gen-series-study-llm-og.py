@@ -13,6 +13,7 @@ SCRIPT_DIR = Path(__file__).parent
 PROJECT_DIR = SCRIPT_DIR.parent
 OG_DIR = PROJECT_DIR / "og"
 FONTS_DIR = SCRIPT_DIR / "fonts"
+ICON_PATH = PROJECT_DIR / "icon.png"
 
 WIDTH, HEIGHT = 1200, 630
 BG_TOP = (240, 247, 253)
@@ -20,7 +21,12 @@ BG_BOTTOM = (205, 225, 244)
 WHITE = (255, 255, 255)
 TEXT_DARK = (30, 42, 56)
 TEXT_SUB = (88, 110, 132)
+TEXT_AUTHOR = (80, 80, 95)
+TEXT_BLOG = (160, 175, 190)
 ACCENT = (74, 136, 176)
+
+AUTHOR_NAME = "逆瀬川ちゃん"
+BLOG_NAME = "逆瀬川ちゃんのブログ"
 
 
 def render(output_path: Path):
@@ -30,6 +36,8 @@ def render(output_path: Path):
     font_title = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-ExtraBold.ttf"), 88 * S)
     font_sub = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 30 * S)
     font_tag = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 20 * S)
+    font_author = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 28 * S)
+    font_blog = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Regular.ttf"), 22 * S)
 
     img = Image.new("RGB", (W, H), WHITE)
     for y in range(H):
@@ -64,24 +72,53 @@ def render(output_path: Path):
                 fill=(r, g, b),
             )
 
-    tag = "SERIES"
-    draw.text((80 * S, 90 * S), tag, font=font_tag, fill=ACCENT)
+    # Avatar + author + blog name at top-left
+    avatar_size = 96 * S
+    avatar_x = 76 * S
+    avatar_y = 56 * S
+    if ICON_PATH.exists():
+        try:
+            avatar = Image.open(ICON_PATH).convert("RGBA")
+            avatar = avatar.resize((avatar_size, avatar_size), Image.LANCZOS)
+            mask = Image.new("L", (avatar_size, avatar_size), 0)
+            ImageDraw.Draw(mask).ellipse([0, 0, avatar_size, avatar_size], fill=255)
+            img.paste(avatar.convert("RGB"), (avatar_x, avatar_y), mask)
+            draw = ImageDraw.Draw(img)
+        except Exception:
+            pass
 
+    text_x = avatar_x + avatar_size + 20 * S
+    author_bbox = font_author.getbbox(AUTHOR_NAME)
+    author_h = author_bbox[3] - author_bbox[1]
+    blog_bbox = font_blog.getbbox(BLOG_NAME)
+    blog_h = blog_bbox[3] - blog_bbox[1]
+    total_text_h = author_h + 6 * S + blog_h
+    text_top_y = avatar_y + (avatar_size - total_text_h) // 2
+    draw.text((text_x, text_top_y), AUTHOR_NAME, font=font_author, fill=TEXT_AUTHOR)
+    draw.text((text_x, text_top_y + author_h + 6 * S), BLOG_NAME, font=font_blog, fill=TEXT_BLOG)
+
+    # Eyebrow tag
+    tag = "SERIES"
+    tag_y = avatar_y + avatar_size + 32 * S
+    draw.text((80 * S, tag_y), tag, font=font_tag, fill=ACCENT)
+
+    # Title
     title_line1 = "Study LLM"
-    y = 130 * S
+    y = tag_y + 34 * S
     draw.text((76 * S, y), title_line1, font=font_title, fill=TEXT_DARK)
 
+    # Subtitle
     sub_lines = [
         "GPT-2 から現代 Coding Agent まで",
         "可視化と実践で LLM を解き明かす連載",
     ]
-    y += 130 * S
+    y += 122 * S
     for line in sub_lines:
         draw.text((80 * S, y), line, font=font_sub, fill=TEXT_SUB)
-        y += 46 * S
+        y += 44 * S
 
     footer = "nyosegawa.com/series/study-llm"
-    draw.text((80 * S, H - 72 * S), footer, font=font_sub, fill=ACCENT)
+    draw.text((80 * S, H - 68 * S), footer, font=font_sub, fill=ACCENT)
 
     img = img.resize((WIDTH, HEIGHT), Image.LANCZOS)
     output_path.parent.mkdir(parents=True, exist_ok=True)
