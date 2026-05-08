@@ -21,8 +21,6 @@ ARTIFACT_RAW_BASE_URL = f"https://raw.githubusercontent.com/nyosegawa/harness-be
 
 IMG_DIR = ROOT / "img/harness-bench"
 EN_IMG_DIR = ROOT / "img/en/harness-bench"
-OG_DIR = ROOT / "og"
-EN_OG_DIR = ROOT / "og/en"
 PAGE_DIR = ROOT / "harness-bench"
 JA_PAGE_DIR = ROOT / "ja/harness-bench"
 
@@ -298,22 +296,6 @@ def save_frontier_chart(path: Path, data: dict, subtitle: str = "右上ほど成
     img.save(path, quality=92)
 
 
-def save_og(path: Path):
-    w, h = 1200, 630
-    img = Image.new("RGB", (w, h), "#f7fbff")
-    d = ImageDraw.Draw(img)
-    rounded(d, (36, 36, w - 36, h - 36), 34, "white", "#bed4f3", 3)
-    d.text((90, 95), "HarnessBench", fill=BLUE, font=font(72, True))
-    d.text((92, 184), "Comparing Coding Agent Harnesses", fill=INK, font=font(40, True))
-    d.text((94, 240), "on Real-Repository Debugging Tasks", fill=INK, font=font(40, True))
-    d.text((94, 335), "Codex / Claude Code / Cursor Agent", fill=MUTED, font=font(31))
-    d.text((94, 385), "27 issues · 14 conditions · 378 runs", fill=MUTED, font=font(31))
-    for i, (label, x) in enumerate([("core", 735), ("hidden", 870), ("report", 1025)]):
-        rounded(d, (x, 330 + i * 26, x + 105, 330 + i * 26 + 82), 20, [BLUE, GREEN, ORANGE][i])
-        d.text((x + 19, 354 + i * 26), label, fill="white", font=font(22, True))
-    img.save(path, quality=92)
-
-
 def write_page(data: dict):
     js = json.dumps(data, ensure_ascii=False)
     conditions = data["conditions"]
@@ -323,7 +305,7 @@ layout: layouts/base.vto
 title: HarnessBench
 description: "HarnessBench is a benchmark for comparing Codex, Claude Code, and Cursor Agent on real-repository debugging tasks."
 bodyClass: body-harness-bench
-image: /og/harness-bench.jpg
+image: /og/en/harness-bench-result.jpg
 lang: en
 extra_head:
   - '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
@@ -512,6 +494,7 @@ buildCharts();
     ja_body = body
     replacements = {
         "lang: en": "lang: ja",
+        "image: /og/en/harness-bench-result.jpg": "image: /og/harness-bench-result.jpg",
         'description: "HarnessBench is a benchmark for comparing Codex, Claude Code, and Cursor Agent on real-repository debugging tasks."': 'description: "HarnessBenchは、Codex、Claude Code、Cursor Agentを実リポジトリのデバッグ課題で比較するベンチマークです。"',
         "Harness Bench": "Harness Bench",
         "HarnessBench compares Codex, Claude Code, and Cursor Agent on the same 27 real-repository debugging issues. The primary score is deterministic hidden-test pass/fail, with wall time, token usage, cost estimates, and auxiliary failure reviews retained for analysis.": "HarnessBenchは、Codex、Claude Code、Cursor Agentを同じ27個の実リポジトリ由来デバッグ課題で比較します。主指標はhidden testによる決定論的なpass/failで、wall time、token、cost estimate、補助的なfailure reviewも分析用に残します。",
@@ -554,8 +537,6 @@ buildCharts();
 def main() -> None:
     IMG_DIR.mkdir(parents=True, exist_ok=True)
     EN_IMG_DIR.mkdir(parents=True, exist_ok=True)
-    OG_DIR.mkdir(exist_ok=True)
-    EN_OG_DIR.mkdir(parents=True, exist_ok=True)
     data = load_data()
 
     pass_rows = [(c["short_label"], c["pass_rate"] * 100, {"Codex": BLUE, "Claude Code": GREEN, "Cursor": ORANGE}[c["harness"]]) for c in data["conditions"]]
@@ -566,14 +547,12 @@ def main() -> None:
     # matrix-design.png is a curated image-generation asset, not a deterministic chart.
     # Do not overwrite it when refreshing benchmark charts.
     save_frontier_chart(IMG_DIR / "pass-time-frontier.png", data)
-    save_og(OG_DIR / "harness-bench.jpg")
 
     save_bar_chart(EN_IMG_DIR / "pass-rate.png", "Pass Rate by Harness × Model × Effort", pass_rows, "%", 100)
     save_bar_chart(EN_IMG_DIR / "wall-time.png", "Median Wall Time", time_rows, "m")
     save_difficulty_chart(EN_IMG_DIR / "difficulty.png", data, "Success Rate by Difficulty")
     # matrix-design.png is generated separately because it contains diagram text.
     save_frontier_chart(EN_IMG_DIR / "pass-time-frontier.png", data, "Higher is better; further left is faster")
-    save_og(EN_OG_DIR / "harness-bench.jpg")
     write_page(data)
 
 

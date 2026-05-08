@@ -1,17 +1,16 @@
 ---
-title: "Harness向けのベンチマーク、HarnessBenchを作ってみた話"
+title: "HarnessBenchを作ってみた話"
 description: "Codex、Claude Code、Cursor Agentを同じ実リポジトリのデバッグ課題で比較するHarnessBenchを作り、27問×14条件×378 runsで見えたことをまとめます"
 date: 2026-05-08
 tags: [HarnessBench, Coding Agent, Benchmark, Codex, Claude Code, Cursor]
 author: 逆瀬川ちゃん
 lang: ja
 image: /og/harness-bench.jpg
-og_manual: true
 ---
 
 こんにちは！逆瀬川ちゃん ([@gyakuse](https://x.com/gyakuse)) です！
 
-今日はHarness向けのベンチマーク、HarnessBenchを作ってみた話についてまとめていきたいと思います。
+今日はHarness向けのベンチマークとして作ったHarnessBenchについてまとめていきたいと思います。
 
 <!--more-->
 

@@ -264,10 +264,6 @@ def process_directory(posts_dir: Path, og_dir: Path, lang: str, force: bool) -> 
             continue
 
         fm = parse_frontmatter(post_path)
-        if str(fm.get("og_manual", "")).lower() == "true":
-            print(f"  skip (manual OG) [{lang}]: {slug}")
-            continue
-
         title = fm.get("title", slug)
         tags = fm.get("tags", [])
 
