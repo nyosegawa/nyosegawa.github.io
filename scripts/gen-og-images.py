@@ -79,6 +79,12 @@ def wrap_title(title: str, font: ImageFont.FreeTypeFont, max_width: int) -> list
     Word-aware when the title contains spaces (typical for English),
     character-aware otherwise (typical for Japanese).
     """
+    if "\n" in title:
+        lines: list[str] = []
+        for segment in title.splitlines():
+            lines.extend(wrap_title(segment, font, max_width))
+        return lines[:4]
+
     if " " in title:
         words = title.split(" ")
         lines: list[str] = []
@@ -86,9 +92,18 @@ def wrap_title(title: str, font: ImageFont.FreeTypeFont, max_width: int) -> list
         for word in words:
             candidate = (current + " " + word).strip() if current else word
             bbox = font.getbbox(candidate)
-            if bbox[2] - bbox[0] > max_width and current:
-                lines.append(current)
-                current = word
+            if bbox[2] - bbox[0] > max_width:
+                if current:
+                    lines.append(current)
+                    current = ""
+                for char in word:
+                    test = current + char
+                    char_bbox = font.getbbox(test)
+                    if char_bbox[2] - char_bbox[0] > max_width and current:
+                        lines.append(current)
+                        current = char
+                    else:
+                        current = test
             else:
                 current = candidate
         if current:
@@ -119,7 +134,6 @@ def generate_card(title: str, tags: list[str], output_path: Path, lang: str = "j
     W, H = WIDTH * S, HEIGHT * S
 
     # Load fonts (at 2x size)
-    font_title = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-ExtraBold.ttf"), 54 * S)
     font_tag = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 18 * S)
     font_author = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Bold.ttf"), 30 * S)
     font_blog = ImageFont.truetype(str(FONTS_DIR / "MPLUSRounded1c-Regular.ttf"), 28 * S)
@@ -205,8 +219,17 @@ def generate_card(title: str, tags: list[str], output_path: Path, lang: str = "j
     # --- Title (below avatar area) ---
     title_x = cx + 60 * S
     title_max_w = cw - 120 * S
-    lines = wrap_title(title, font_title, title_max_w)
-    line_height = 74 * S
+    for title_size in range(54, 35, -2):
+        font_title = ImageFont.truetype(
+            str(FONTS_DIR / "MPLUSRounded1c-ExtraBold.ttf"), title_size * S,
+        )
+        lines = wrap_title(title, font_title, title_max_w)
+        if (
+            len(lines) <= 4
+            and all(font_title.getbbox(line)[2] - font_title.getbbox(line)[0] <= title_max_w for line in lines)
+        ):
+            break
+    line_height = int(title_size * 1.35) * S
     title_start_y = author_y + avatar_size + 24 * S
 
     for i, line in enumerate(lines):
@@ -264,7 +287,7 @@ def process_directory(posts_dir: Path, og_dir: Path, lang: str, force: bool) -> 
             continue
 
         fm = parse_frontmatter(post_path)
-        title = fm.get("title", slug)
+        title = fm.get("og_title", fm.get("title", slug)).replace("\\\\n", "\n").replace("\\n", "\n")
         tags = fm.get("tags", [])
 
         print(f"  generating [{lang}]: {slug}")

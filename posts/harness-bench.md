@@ -1,5 +1,6 @@
 ---
-title: "HarnessBenchを作ってみた話"
+title: "Coding Agent比較用の独自のベンチマーク、Harness Benchを作ってみた話"
+og_title: "Coding Agent比較用の\\n独自のベンチマーク、\\nHarness Benchを作ってみた話"
 description: "Codex、Claude Code、Cursor Agentを同じ実リポジトリのデバッグ課題で比較するHarnessBenchを作り、27問×14条件×378 runsで見えたことをまとめます"
 date: 2026-05-08
 tags: [HarnessBench, Coding Agent, Benchmark, Codex, Claude Code, Cursor]
