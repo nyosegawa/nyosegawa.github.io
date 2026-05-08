@@ -100,6 +100,8 @@ Runtime differences were much clearer.
 
 Cursor Composer 2 fast had a median wall time of 3.6 minutes, and Cursor GPT-5.5 medium was 4.7 minutes. Codex GPT-5.5 xhigh was 10.2 minutes, Claude Opus max was 15.1 minutes, and Cursor Opus max was 19.7 minutes.
 
+There were 6 timeouts in total: 1 for Claude Code Opus high, 2 for Claude Code Opus xhigh, 2 for Claude Code Opus max, and 1 for Cursor Opus high. Even with a 60-minute limit, some high-effort Claude Code runs did not reach a natural stop.
+
 So the picture changes when we look at runtime together with pass rate.
 
 ![Pass rate and wall time](/img/en/harness-bench/pass-time-frontier.png)
