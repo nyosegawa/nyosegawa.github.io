@@ -305,7 +305,7 @@ layout: layouts/base.vto
 title: HarnessBench
 description: "HarnessBench is a benchmark for comparing Codex, Claude Code, and Cursor Agent on real-repository debugging tasks."
 bodyClass: body-harness-bench
-image: /og/en/harness-bench-result.jpg
+image: /og/en/harness-bench-results.jpg
 lang: en
 extra_head:
   - '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
@@ -494,7 +494,7 @@ buildCharts();
     ja_body = body
     replacements = {
         "lang: en": "lang: ja",
-        "image: /og/en/harness-bench-result.jpg": "image: /og/harness-bench-result.jpg",
+        "image: /og/en/harness-bench-results.jpg": "image: /og/harness-bench-results.jpg",
         'description: "HarnessBench is a benchmark for comparing Codex, Claude Code, and Cursor Agent on real-repository debugging tasks."': 'description: "HarnessBenchは、Codex、Claude Code、Cursor Agentを実リポジトリのデバッグ課題で比較するベンチマークです。"',
         "Harness Bench": "Harness Bench",
         "HarnessBench compares Codex, Claude Code, and Cursor Agent on the same 27 real-repository debugging issues. The primary score is deterministic hidden-test pass/fail, with wall time, token usage, cost estimates, and auxiliary failure reviews retained for analysis.": "HarnessBenchは、Codex、Claude Code、Cursor Agentを同じ27個の実リポジトリ由来デバッグ課題で比較します。主指標はhidden testによる決定論的なpass/failで、wall time、token、cost estimate、補助的なfailure reviewも分析用に残します。",

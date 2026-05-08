@@ -5,7 +5,7 @@ date: 2026-05-08
 tags: [HarnessBench, Coding Agent, Benchmark, Codex, Claude Code, Cursor]
 author: 逆瀬川ちゃん
 lang: en
-image: /og/en/harness-bench.jpg
+image: /og/en/harness-bench-post.jpg
 ---
 
 Hi there! This is Sakasegawa-chan ([@gyakuse](https://x.com/gyakuse))!
