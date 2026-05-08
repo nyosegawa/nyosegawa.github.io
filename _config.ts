@@ -73,6 +73,8 @@ site.process([".html"], (pages) => {
   // Compute the alt-language URL of a given URL.
   // / ↔ /en/, /posts/foo/ ↔ /en/posts/foo/, etc.
   const computeAltUrl = (u: string) => {
+    if (u === "/harness-bench/") return "/ja/harness-bench/";
+    if (u === "/ja/harness-bench/") return "/harness-bench/";
     if (u.startsWith("/en/")) return u.slice(3);
     if (u === "/en") return "/";
     return "/en" + u;
@@ -97,9 +99,9 @@ site.process([".html"], (pages) => {
 
     const title = doc.querySelector("title");
     const url = page.data.url as string | undefined;
-    const isEn = !!url?.startsWith("/en/") || url === "/en";
+    const isEn = page.data.lang === "en" || !!url?.startsWith("/en/") || url === "/en";
     const lang: "ja" | "en" = isEn ? "en" : "ja";
-    const stripped = isEn ? url!.slice(3) || "/" : url || "/";
+    const stripped = url?.startsWith("/en/") ? url.slice(3) || "/" : url || "/";
     const isBlogPage =
       stripped.startsWith("/blog/") ||
       stripped.startsWith("/posts/") ||

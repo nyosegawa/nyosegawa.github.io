@@ -8,6 +8,8 @@ home:
 menu_links:
   - text: Blog
     href: /blog/
+  - text: HarnessBench
+    href: /harness-bench/
 
 extra_head:
   - <link rel="preconnect" href="https://fonts.googleapis.com">

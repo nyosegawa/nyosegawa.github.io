@@ -1,0 +1,188 @@
+---
+layout: layouts/base.vto
+title: HarnessBench
+description: "HarnessBench is a benchmark for comparing Codex, Claude Code, and Cursor Agent on real-repository debugging tasks."
+bodyClass: body-harness-bench
+image: /og/harness-bench.jpg
+lang: en
+extra_head:
+  - '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
+---
+
+<style>
+.hb-wrap { max-width: 1180px; margin: 0 auto; padding: 32px 18px 80px; }
+.hb-hero { margin: 20px 0 18px; }
+.hb-eyebrow { color: #0f6be8; font-weight: 800; letter-spacing: 0; margin: 0 0 10px; }
+.hb-title { font-size: clamp(1.75rem, 3.2vw, 3rem); line-height: 1.15; margin: 0; letter-spacing: 0; color: #13213b; max-width: 1080px; }
+.hb-lead { color: #4c5d75; font-size: 1rem; line-height: 1.72; max-width: 900px; }
+.hb-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+.hb-action { display:inline-flex; align-items:center; border:1px solid #b9cff0; border-radius:999px; padding:8px 13px; color:#0f6be8; text-decoration:none; background:Canvas; }
+.hb-panel { background: color-mix(in oklab, Canvas 94%, #eaf2ff); border: 1px solid color-mix(in oklab, CanvasText 12%, transparent); border-radius: 8px; padding: 18px; }
+.hb-experiment-panel { margin: 0 0 22px; }
+.hb-statgrid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0; }
+.hb-stat { border: 1px solid color-mix(in oklab, CanvasText 12%, transparent); border-radius: 8px; padding: 14px; background: Canvas; }
+.hb-stat b { display:block; font-size: 1.55rem; color: #0f6be8; }
+.hb-stat span { color:#697891; font-size:.9rem; }
+.hb-grid { display:grid; grid-template-columns: 1fr; gap: 18px; margin: 18px 0; }
+.hb-chart-card { background: Canvas; border: 1px solid color-mix(in oklab, CanvasText 12%, transparent); border-radius: 8px; padding: 18px; min-height: 390px; }
+.hb-chart-card h2, .hb-section h2 { margin: 0 0 12px; color:#13213b; font-size: 1.25rem; }
+.hb-chart-card canvas { width: 100% !important; height: 320px !important; }
+.hb-controls { display:flex; flex-wrap:wrap; gap: 8px; margin: 8px 0 18px; }
+.hb-controls button { border: 1px solid #b9cff0; background: Canvas; color:#13213b; border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+.hb-controls button[aria-pressed="true"] { background:#0f6be8; color:white; border-color:#0f6be8; }
+.hb-table-wrap { overflow-x:auto; border: 1px solid color-mix(in oklab, CanvasText 12%, transparent); border-radius:8px; background:Canvas; }
+.hb-table { width:100%; border-collapse: collapse; min-width: 900px; }
+.hb-table th, .hb-table td { padding: 10px 12px; border-bottom: 1px solid color-mix(in oklab, CanvasText 10%, transparent); text-align:left; white-space: nowrap; }
+.hb-table th { color:#53647c; font-size:.86rem; }
+.hb-note { color:#5f6f89; line-height:1.75; }
+.hb-artifacts { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0 0; }
+.hb-artifacts a { display:inline-flex; align-items:center; border:1px solid #b9cff0; border-radius:999px; padding:7px 11px; color:#0f6be8; text-decoration:none; background:Canvas; }
+.hb-pill { display:inline-flex; border-radius:999px; padding:3px 8px; background:#e9f2ff; color:#0f6be8; font-size:.82rem; }
+@media (max-width: 860px) { .hb-grid { grid-template-columns: 1fr; } .hb-statgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+
+<div class="hb-wrap">
+  <section class="hb-hero">
+    <p class="hb-eyebrow">Benchmark</p>
+    <h1 class="hb-title">Harness Bench</h1>
+    <p class="hb-lead">HarnessBench compares Codex, Claude Code, and Cursor Agent on the same 27 real-repository debugging issues. The primary score is deterministic hidden-test pass/fail, with wall time, token usage, cost estimates, and auxiliary failure reviews retained for analysis.</p>
+    <div class="hb-actions">
+      <a class="hb-action" href="https://github.com/nyosegawa/harness-bench">GitHub repository</a>
+      <a class="hb-action" href="https://github.com/nyosegawa/harness-bench/tree/main/benchmark/experiments/harnessbench-v2-official-2026-05-04c">Official artifacts</a>
+      <a class="hb-action" href="/posts/harness-bench/">Blog post</a>
+    </div>
+  </section>
+
+  <aside class="hb-panel hb-experiment-panel">
+    <p class="hb-note">Latest official experiment<br><span class="hb-pill">harnessbench-v2-official-2026-05-04c</span></p>
+    <p class="hb-note">Top observed condition: Codex / gpt-5.5 / xhigh<br>22/27 passed (81.5%). Success-rate differences were not statistically significant at n=27.</p>
+  </aside>
+
+  <section class="hb-statgrid">
+    <div class="hb-stat"><b>27</b><span>debugging tasks</span></div>
+    <div class="hb-stat"><b>14</b><span>harness/model/effort conditions</span></div>
+    <div class="hb-stat"><b>378</b><span>official agent runs</span></div>
+    <div class="hb-stat"><b>72.8%</b><span>overall hidden-test pass rate</span></div>
+  </section>
+
+  <section class="hb-grid">
+    <div class="hb-chart-card">
+      <h2>Pass Rate by Harness × Model × Effort</h2>
+      <canvas id="passChart"></canvas>
+    </div>
+    <div class="hb-chart-card">
+      <h2>Median Wall Time</h2>
+      <canvas id="timeChart"></canvas>
+    </div>
+    <div class="hb-chart-card">
+      <h2>Success by Difficulty</h2>
+      <canvas id="difficultyChart"></canvas>
+    </div>
+    <div class="hb-chart-card">
+      <h2>Pass Rate vs Time</h2>
+      <canvas id="frontierChart"></canvas>
+    </div>
+  </section>
+
+  <section class="hb-section">
+    <h2>Condition Table</h2>
+    <div class="hb-controls" id="harnessFilters" aria-label="Harness filter"></div>
+    <div class="hb-table-wrap">
+      <table class="hb-table" id="conditionTable">
+        <thead><tr><th>Harness × Model × Effort</th><th>Harness</th><th>Pass</th><th>Pass rate</th><th>Median time</th><th>Cost/pass</th><th>Timeouts</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="hb-section">
+    <h2>Interpretation and Artifacts</h2>
+    <p class="hb-note">The strongest observed pass rate was Codex / GPT-5.5 / xhigh at 22/27. However, with only 27 paired tasks, no pairwise success-rate gap reached p &lt; 0.05. Runtime differences were clearer: Cursor Composer 2 fast and Cursor GPT-5.5 medium were substantially faster, while higher Opus effort settings traded latency for more deliberation without a statistically reliable success gain in this run.</p>
+    <p class="hb-note">Cost should be read carefully. Claude Code reports dollar cost directly, Codex and some Cursor GPT-5.5 runs use API-equivalent rate-card estimates, and Cursor Opus/Composer conditions may not expose comparable cost data.</p>
+    <p class="hb-note">The public repository contains the benchmark specification, cases, hidden tests, runner, report generator, and summary artifacts. Raw harness execution logs are not currently published on this website; they are retained locally under the experiment artifact policy because they can be large and may contain provider-specific session details.</p>
+    <div class="hb-artifacts" aria-label="Official experiment artifacts">
+      <a href="https://github.com/nyosegawa/harness-bench/tree/main/benchmark/experiments/harnessbench-v2-official-2026-05-04c">artifact directory</a>
+      <a href="https://raw.githubusercontent.com/nyosegawa/harness-bench/main/benchmark/experiments/harnessbench-v2-official-2026-05-04c/summary.json">summary.json</a>
+      <a href="https://raw.githubusercontent.com/nyosegawa/harness-bench/main/benchmark/experiments/harnessbench-v2-official-2026-05-04c/manifest.json">manifest.json</a>
+      <a href="https://raw.githubusercontent.com/nyosegawa/harness-bench/main/benchmark/experiments/harnessbench-v2-official-2026-05-04c/failure-reviews.json">failure-reviews.json</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/nyosegawa/harness-bench/main/benchmark/experiments/harnessbench-v2-official-2026-05-04c/results.html">full results.html</a>
+    </div>
+  </section>
+
+  <section class="hb-section">
+    <h2>Case Set</h2>
+    <div class="hb-table-wrap">
+      <table class="hb-table">
+        <thead><tr><th>Case</th><th>Repo</th><th>Difficulty</th><th>Size</th><th>Pass</th><th>PR</th></tr></thead>
+        <tbody>
+          <tr><td>axios-axios-high-http-connect-timeout</td><td>axios/axios</td><td>high</td><td>small</td><td>14/14</td><td><a href="https://github.com/axios/axios/pull/10819">PR</a></td></tr><tr><td>axios-axios-low-settle-error-code</td><td>axios/axios</td><td>low</td><td>small</td><td>14/14</td><td><a href="https://github.com/axios/axios/pull/7276">PR</a></td></tr><tr><td>axios-axios-mid-fetch-global-access</td><td>axios/axios</td><td>mid</td><td>small</td><td>14/14</td><td><a href="https://github.com/axios/axios/pull/7260">PR</a></td></tr><tr><td>fastapi-fastapi-high-pydantic-json-fast-path</td><td>fastapi/fastapi</td><td>high</td><td>large</td><td>12/14</td><td><a href="https://github.com/fastapi/fastapi/pull/14962">PR</a></td></tr><tr><td>fastapi-fastapi-low-remove-vibe-decorator</td><td>fastapi/fastapi</td><td>low</td><td>large</td><td>14/14</td><td><a href="https://github.com/fastapi/fastapi/pull/15363">PR</a></td></tr><tr><td>fastapi-fastapi-mid-jsonable-encoder-color-types</td><td>fastapi/fastapi</td><td>mid</td><td>large</td><td>14/14</td><td><a href="https://github.com/fastapi/fastapi/pull/15101">PR</a></td></tr><tr><td>go-gitea-gitea-high-compare-no-common-history</td><td>go-gitea/gitea</td><td>high</td><td>large</td><td>9/14</td><td><a href="https://github.com/go-gitea/gitea/pull/37470">PR</a></td></tr><tr><td>go-gitea-gitea-low-schedule-null-payload</td><td>go-gitea/gitea</td><td>low</td><td>large</td><td>14/14</td><td><a href="https://github.com/go-gitea/gitea/pull/37466">PR</a></td></tr><tr><td>go-gitea-gitea-mid-pr-merge-self-reference</td><td>go-gitea/gitea</td><td>mid</td><td>large</td><td>7/14</td><td><a href="https://github.com/go-gitea/gitea/pull/36490">PR</a></td></tr><tr><td>jesseduffield-lazygit-high-branch-divergence-fast-path</td><td>jesseduffield/lazygit</td><td>high</td><td>small</td><td>5/14</td><td><a href="https://github.com/jesseduffield/lazygit/pull/5536">PR</a></td></tr><tr><td>jesseduffield-lazygit-low-github-owner-casing</td><td>jesseduffield/lazygit</td><td>low</td><td>small</td><td>14/14</td><td><a href="https://github.com/jesseduffield/lazygit/pull/5495">PR</a></td></tr><tr><td>jesseduffield-lazygit-mid-preserve-commit-message-whitespace</td><td>jesseduffield/lazygit</td><td>mid</td><td>small</td><td>9/14</td><td><a href="https://github.com/jesseduffield/lazygit/pull/5528">PR</a></td></tr><tr><td>langflow-ai-langflow-high-lfx-stream-fallback</td><td>langflow-ai/langflow</td><td>high</td><td>large</td><td>14/14</td><td><a href="https://github.com/langflow-ai/langflow/pull/12906">PR</a></td></tr><tr><td>langflow-ai-langflow-low-loguru-file-routing</td><td>langflow-ai/langflow</td><td>low</td><td>large</td><td>12/14</td><td><a href="https://github.com/langflow-ai/langflow/pull/12926">PR</a></td></tr><tr><td>langflow-ai-langflow-mid-mcp-connectable-inputs</td><td>langflow-ai/langflow</td><td>mid</td><td>large</td><td>0/14</td><td><a href="https://github.com/langflow-ai/langflow/pull/12782">PR</a></td></tr><tr><td>louislam-uptime-kuma-high-websocket-auth-options</td><td>louislam/uptime-kuma</td><td>high</td><td>medium</td><td>0/14</td><td><a href="https://github.com/louislam/uptime-kuma/pull/7304">PR</a></td></tr><tr><td>louislam-uptime-kuma-low-submillisecond-ping-chart</td><td>louislam/uptime-kuma</td><td>low</td><td>medium</td><td>12/14</td><td><a href="https://github.com/louislam/uptime-kuma/pull/7159">PR</a></td></tr><tr><td>louislam-uptime-kuma-mid-uptime-cleanup-buckets</td><td>louislam/uptime-kuma</td><td>mid</td><td>medium</td><td>11/14</td><td><a href="https://github.com/louislam/uptime-kuma/pull/7235">PR</a></td></tr><tr><td>sharkdp-bat-high-fallback-syntax</td><td>sharkdp/bat</td><td>high</td><td>small</td><td>13/14</td><td><a href="https://github.com/sharkdp/bat/pull/3617">PR</a></td></tr><tr><td>sharkdp-bat-low-zip-binary-detection</td><td>sharkdp/bat</td><td>low</td><td>small</td><td>13/14</td><td><a href="https://github.com/sharkdp/bat/pull/3686">PR</a></td></tr><tr><td>sharkdp-bat-mid-control-character-wrapping</td><td>sharkdp/bat</td><td>mid</td><td>small</td><td>2/14</td><td><a href="https://github.com/sharkdp/bat/pull/3640">PR</a></td></tr><tr><td>usememos-memos-high-missing-related-users</td><td>usememos/memos</td><td>high</td><td>medium</td><td>12/14</td><td><a href="https://github.com/usememos/memos/pull/5809">PR</a></td></tr><tr><td>usememos-memos-low-omit-internal-user-settings</td><td>usememos/memos</td><td>low</td><td>medium</td><td>14/14</td><td><a href="https://github.com/usememos/memos/pull/5917">PR</a></td></tr><tr><td>usememos-memos-mid-mixed-case-user-resource-names</td><td>usememos/memos</td><td>mid</td><td>medium</td><td>11/14</td><td><a href="https://github.com/usememos/memos/pull/5853">PR</a></td></tr><tr><td>vitejs-vite-high-hmr-patch-esm-sentinel</td><td>vitejs/vite</td><td>high</td><td>large</td><td>9/14</td><td><a href="https://github.com/vitejs/vite/pull/22269">PR</a></td></tr><tr><td>vitejs-vite-low-flatten-id-sanitized-chars</td><td>vitejs/vite</td><td>low</td><td>large</td><td>2/14</td><td><a href="https://github.com/vitejs/vite/pull/22208">PR</a></td></tr><tr><td>vitejs-vite-mid-deno-workspace-root</td><td>vitejs/vite</td><td>mid</td><td>large</td><td>10/14</td><td><a href="https://github.com/vitejs/vite/pull/22238">PR</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script type="application/json" id="hb-data">{"experiment_id": "harnessbench-v2-official-2026-05-04c", "finished_at": "2026-05-06T12:31:27.489Z", "totals": {"conditions": 14, "cases": 27, "runs": 378, "passed": 275, "failed": 103, "pass_rate": 0.7275132275132276, "timeouts": 6, "invalid_attempts": 1}, "conditions": [{"id": "codex:gpt-5.5:xhigh:baseline", "label": "Codex / gpt-5.5 / xhigh", "short_label": "Codex / gpt-5.5 / xhigh", "harness": "Codex", "runs": 27, "passed": 22, "failed": 5, "pass_rate": 0.8148148148148148, "median_wall_time_ms": 610893, "median_wall_time_min": 10.18155, "cost_usd": 84.46191800000001, "cost_per_pass": 3.8391780909090913, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}, "high": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}}}, {"id": "cursor:gpt-5.5-medium:baseline", "label": "Cursor / gpt-5.5 / medium", "short_label": "Cursor / gpt-5.5 / medium", "harness": "Cursor", "runs": 27, "passed": 21, "failed": 6, "pass_rate": 0.7777777777777778, "median_wall_time_ms": 280737, "median_wall_time_min": 4.67895, "cost_usd": 28.588195000000002, "cost_per_pass": 1.3613426190476192, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}, "mid": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}, "high": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}}}, {"id": "cursor:gpt-5.5-high:baseline", "label": "Cursor / gpt-5.5 / high", "short_label": "Cursor / gpt-5.5 / high", "harness": "Cursor", "runs": 27, "passed": 21, "failed": 6, "pass_rate": 0.7777777777777778, "median_wall_time_ms": 371489, "median_wall_time_min": 6.191483333333333, "cost_usd": 42.67413200000001, "cost_per_pass": 2.032101523809524, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}, "high": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}}}, {"id": "codex:gpt-5.5:medium:baseline", "label": "Codex / gpt-5.5 / medium", "short_label": "Codex / gpt-5.5 / medium", "harness": "Codex", "runs": 27, "passed": 21, "failed": 6, "pass_rate": 0.7777777777777778, "median_wall_time_ms": 405277, "median_wall_time_min": 6.754616666666666, "cost_usd": 40.031937, "cost_per_pass": 1.9062827142857142, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}, "high": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}}}, {"id": "cursor:claude-opus-4-7-max:baseline", "label": "Cursor / claude-opus-4-7 / max", "short_label": "Cursor / Opus 4.7 / max", "harness": "Cursor", "runs": 27, "passed": 21, "failed": 6, "pass_rate": 0.7777777777777778, "median_wall_time_ms": 1179349, "median_wall_time_min": 19.655816666666666, "cost_usd": null, "cost_per_pass": null, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}, "high": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}}}, {"id": "cursor:gpt-5.5-extra-high:baseline", "label": "Cursor / gpt-5.5 / xhigh", "short_label": "Cursor / gpt-5.5 / xhigh", "harness": "Cursor", "runs": 27, "passed": 20, "failed": 7, "pass_rate": 0.7407407407407407, "median_wall_time_ms": 344921, "median_wall_time_min": 5.748683333333333, "cost_usd": 38.92970700000001, "cost_per_pass": 1.9464853500000003, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}, "high": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}}}, {"id": "claude:claude-opus-4-7:high:baseline", "label": "Claude Code / claude-opus-4-7 / high", "short_label": "Claude / Opus 4.7 / high", "harness": "Claude Code", "runs": 27, "passed": 20, "failed": 7, "pass_rate": 0.7407407407407407, "median_wall_time_ms": 413854, "median_wall_time_min": 6.897566666666667, "cost_usd": 39.173702999999996, "cost_per_pass": 1.9586851499999998, "timeouts": 1, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 5, "pass_rate": 0.5555555555555556}, "high": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}}}, {"id": "cursor:claude-opus-4-7-high:baseline", "label": "Cursor / claude-opus-4-7 / high", "short_label": "Cursor / Opus 4.7 / high", "harness": "Cursor", "runs": 27, "passed": 20, "failed": 7, "pass_rate": 0.7407407407407407, "median_wall_time_ms": 434712, "median_wall_time_min": 7.2452, "cost_usd": null, "cost_per_pass": null, "timeouts": 1, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 4, "pass_rate": 0.4444444444444444}, "high": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}}}, {"id": "cursor:claude-opus-4-7-extra-high:baseline", "label": "Cursor / claude-opus-4-7 / xhigh", "short_label": "Cursor / Opus 4.7 / xhigh", "harness": "Cursor", "runs": 27, "passed": 20, "failed": 7, "pass_rate": 0.7407407407407407, "median_wall_time_ms": 679723, "median_wall_time_min": 11.328716666666667, "cost_usd": 0, "cost_per_pass": 0.0, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 5, "pass_rate": 0.5555555555555556}, "high": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}}}, {"id": "codex:gpt-5.5:high:baseline", "label": "Codex / gpt-5.5 / high", "short_label": "Codex / gpt-5.5 / high", "harness": "Codex", "runs": 27, "passed": 19, "failed": 8, "pass_rate": 0.7037037037037037, "median_wall_time_ms": 542122, "median_wall_time_min": 9.035366666666667, "cost_usd": 60.8897, "cost_per_pass": 3.204721052631579, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}, "mid": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}, "high": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}}}, {"id": "cursor:composer-2:baseline", "label": "Cursor / Composer 2 / normal", "short_label": "Cursor / Composer 2 / normal", "harness": "Cursor", "runs": 27, "passed": 18, "failed": 9, "pass_rate": 0.6666666666666666, "median_wall_time_ms": 316651, "median_wall_time_min": 5.277516666666667, "cost_usd": null, "cost_per_pass": null, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}, "high": {"runs": 9, "passed": 4, "pass_rate": 0.4444444444444444}}}, {"id": "claude:claude-opus-4-7:xhigh:baseline", "label": "Claude Code / claude-opus-4-7 / xhigh", "short_label": "Claude / Opus 4.7 / xhigh", "harness": "Claude Code", "runs": 27, "passed": 18, "failed": 9, "pass_rate": 0.6666666666666666, "median_wall_time_ms": 656661, "median_wall_time_min": 10.94435, "cost_usd": 62.2409858, "cost_per_pass": 3.4578325444444444, "timeouts": 2, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 5, "pass_rate": 0.5555555555555556}, "high": {"runs": 9, "passed": 5, "pass_rate": 0.5555555555555556}}}, {"id": "cursor:composer-2-fast:baseline", "label": "Cursor / Composer 2 / fast", "short_label": "Cursor / Composer 2 / fast", "harness": "Cursor", "runs": 27, "passed": 17, "failed": 10, "pass_rate": 0.6296296296296297, "median_wall_time_ms": 218662, "median_wall_time_min": 3.6443666666666665, "cost_usd": null, "cost_per_pass": null, "timeouts": 0, "by_difficulty": {"low": {"runs": 9, "passed": 8, "pass_rate": 0.8888888888888888}, "mid": {"runs": 9, "passed": 5, "pass_rate": 0.5555555555555556}, "high": {"runs": 9, "passed": 4, "pass_rate": 0.4444444444444444}}}, {"id": "claude:claude-opus-4-7:max:baseline", "label": "Claude Code / claude-opus-4-7 / max", "short_label": "Claude / Opus 4.7 / max", "harness": "Claude Code", "runs": 27, "passed": 17, "failed": 10, "pass_rate": 0.6296296296296297, "median_wall_time_ms": 908918, "median_wall_time_min": 15.148633333333333, "cost_usd": 87.38012850000001, "cost_per_pass": 5.14000755882353, "timeouts": 2, "by_difficulty": {"low": {"runs": 9, "passed": 7, "pass_rate": 0.7777777777777778}, "mid": {"runs": 9, "passed": 4, "pass_rate": 0.4444444444444444}, "high": {"runs": 9, "passed": 6, "pass_rate": 0.6666666666666666}}}], "cases": [{"id": "axios-axios-high-http-connect-timeout", "repo": "axios/axios", "difficulty": "high", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/axios/axios/pull/10819", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "axios-axios-low-settle-error-code", "repo": "axios/axios", "difficulty": "low", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/axios/axios/pull/7276", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "axios-axios-mid-fetch-global-access", "repo": "axios/axios", "difficulty": "mid", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/axios/axios/pull/7260", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "fastapi-fastapi-high-pydantic-json-fast-path", "repo": "fastapi/fastapi", "difficulty": "high", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/fastapi/fastapi/pull/14962", "passed": 12, "runs": 14, "pass_rate": 0.8571428571428571}, {"id": "fastapi-fastapi-low-remove-vibe-decorator", "repo": "fastapi/fastapi", "difficulty": "low", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/fastapi/fastapi/pull/15363", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "fastapi-fastapi-mid-jsonable-encoder-color-types", "repo": "fastapi/fastapi", "difficulty": "mid", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/fastapi/fastapi/pull/15101", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "go-gitea-gitea-high-compare-no-common-history", "repo": "go-gitea/gitea", "difficulty": "high", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/go-gitea/gitea/pull/37470", "passed": 9, "runs": 14, "pass_rate": 0.6428571428571429}, {"id": "go-gitea-gitea-low-schedule-null-payload", "repo": "go-gitea/gitea", "difficulty": "low", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/go-gitea/gitea/pull/37466", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "go-gitea-gitea-mid-pr-merge-self-reference", "repo": "go-gitea/gitea", "difficulty": "mid", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/go-gitea/gitea/pull/36490", "passed": 7, "runs": 14, "pass_rate": 0.5}, {"id": "jesseduffield-lazygit-high-branch-divergence-fast-path", "repo": "jesseduffield/lazygit", "difficulty": "high", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/jesseduffield/lazygit/pull/5536", "passed": 5, "runs": 14, "pass_rate": 0.35714285714285715}, {"id": "jesseduffield-lazygit-low-github-owner-casing", "repo": "jesseduffield/lazygit", "difficulty": "low", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/jesseduffield/lazygit/pull/5495", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "jesseduffield-lazygit-mid-preserve-commit-message-whitespace", "repo": "jesseduffield/lazygit", "difficulty": "mid", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/jesseduffield/lazygit/pull/5528", "passed": 9, "runs": 14, "pass_rate": 0.6428571428571429}, {"id": "langflow-ai-langflow-high-lfx-stream-fallback", "repo": "langflow-ai/langflow", "difficulty": "high", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/langflow-ai/langflow/pull/12906", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "langflow-ai-langflow-low-loguru-file-routing", "repo": "langflow-ai/langflow", "difficulty": "low", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/langflow-ai/langflow/pull/12926", "passed": 12, "runs": 14, "pass_rate": 0.8571428571428571}, {"id": "langflow-ai-langflow-mid-mcp-connectable-inputs", "repo": "langflow-ai/langflow", "difficulty": "mid", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/langflow-ai/langflow/pull/12782", "passed": 0, "runs": 14, "pass_rate": 0.0}, {"id": "louislam-uptime-kuma-high-websocket-auth-options", "repo": "louislam/uptime-kuma", "difficulty": "high", "size_bucket": "medium", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/louislam/uptime-kuma/pull/7304", "passed": 0, "runs": 14, "pass_rate": 0.0}, {"id": "louislam-uptime-kuma-low-submillisecond-ping-chart", "repo": "louislam/uptime-kuma", "difficulty": "low", "size_bucket": "medium", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/louislam/uptime-kuma/pull/7159", "passed": 12, "runs": 14, "pass_rate": 0.8571428571428571}, {"id": "louislam-uptime-kuma-mid-uptime-cleanup-buckets", "repo": "louislam/uptime-kuma", "difficulty": "mid", "size_bucket": "medium", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/louislam/uptime-kuma/pull/7235", "passed": 11, "runs": 14, "pass_rate": 0.7857142857142857}, {"id": "sharkdp-bat-high-fallback-syntax", "repo": "sharkdp/bat", "difficulty": "high", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/sharkdp/bat/pull/3617", "passed": 13, "runs": 14, "pass_rate": 0.9285714285714286}, {"id": "sharkdp-bat-low-zip-binary-detection", "repo": "sharkdp/bat", "difficulty": "low", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/sharkdp/bat/pull/3686", "passed": 13, "runs": 14, "pass_rate": 0.9285714285714286}, {"id": "sharkdp-bat-mid-control-character-wrapping", "repo": "sharkdp/bat", "difficulty": "mid", "size_bucket": "small", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/sharkdp/bat/pull/3640", "passed": 2, "runs": 14, "pass_rate": 0.14285714285714285}, {"id": "usememos-memos-high-missing-related-users", "repo": "usememos/memos", "difficulty": "high", "size_bucket": "medium", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/usememos/memos/pull/5809", "passed": 12, "runs": 14, "pass_rate": 0.8571428571428571}, {"id": "usememos-memos-low-omit-internal-user-settings", "repo": "usememos/memos", "difficulty": "low", "size_bucket": "medium", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/usememos/memos/pull/5917", "passed": 14, "runs": 14, "pass_rate": 1.0}, {"id": "usememos-memos-mid-mixed-case-user-resource-names", "repo": "usememos/memos", "difficulty": "mid", "size_bucket": "medium", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/usememos/memos/pull/5853", "passed": 11, "runs": 14, "pass_rate": 0.7857142857142857}, {"id": "vitejs-vite-high-hmr-patch-esm-sentinel", "repo": "vitejs/vite", "difficulty": "high", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/vitejs/vite/pull/22269", "passed": 9, "runs": 14, "pass_rate": 0.6428571428571429}, {"id": "vitejs-vite-low-flatten-id-sanitized-chars", "repo": "vitejs/vite", "difficulty": "low", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/vitejs/vite/pull/22208", "passed": 2, "runs": 14, "pass_rate": 0.14285714285714285}, {"id": "vitejs-vite-mid-deno-workspace-root", "repo": "vitejs/vite", "difficulty": "mid", "size_bucket": "large", "instruction": ">", "selection_notes": ">", "pr_url": "https://github.com/vitejs/vite/pull/22238", "passed": 10, "runs": 14, "pass_rate": 0.7142857142857143}], "statistics": {"success_rate": "No pairwise success-rate comparison was significant at p < 0.05 in 27 paired tasks.", "wall_time": "Wall time differences were statistically visible; Cursor Composer 2 fast and Cursor GPT-5.5 medium were the fastest median conditions.", "sample_size_note": "Detecting a 10-point success-rate gap reliably needs roughly 160-315 paired tasks before multiple-comparison correction."}}</script>
+<script>
+const HB = JSON.parse(document.getElementById("hb-data").textContent);
+const colors = { "Codex": "#0f6be8", "Claude Code": "#18a058", "Cursor": "#f59e0b" };
+let activeHarnesses = new Set(["Codex", "Claude Code", "Cursor"]);
+const fmtPct = v => (v * 100).toFixed(1) + "%";
+const fmtMin = ms => (ms / 60000).toFixed(1) + "m";
+const filtered = () => HB.conditions.filter(c => activeHarnesses.has(c.harness));
+
+function labels(rows) { return rows.map(c => c.short_label); }
+function colorRows(rows) { return rows.map(c => colors[c.harness] || "#999"); }
+
+function buildCharts() {
+  const rows = filtered();
+  passChart.data.labels = labels(rows);
+  passChart.data.datasets[0].data = rows.map(c => c.pass_rate * 100);
+  passChart.data.datasets[0].backgroundColor = colorRows(rows);
+  timeChart.data.labels = labels(rows);
+  timeChart.data.datasets[0].data = rows.map(c => c.median_wall_time_min);
+  timeChart.data.datasets[0].backgroundColor = colorRows(rows);
+  difficultyChart.data.labels = labels(rows);
+  ["low","mid","high"].forEach((d, i) => difficultyChart.data.datasets[i].data = rows.map(c => c.by_difficulty[d].pass_rate * 100));
+  frontierChart.data.datasets = ["Codex","Claude Code","Cursor"].map(h => ({
+    label: h,
+    data: rows.filter(c => c.harness === h).map(c => ({ x: c.median_wall_time_min, y: c.pass_rate * 100, label: c.short_label })),
+    backgroundColor: colors[h],
+  }));
+  [passChart, timeChart, difficultyChart, frontierChart].forEach(c => c.update());
+  renderTable();
+}
+
+const common = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ctx.raw?.label || (ctx.parsed.x ? `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%, ${ctx.parsed.x.toFixed(1)}m` : `${ctx.parsed.x ?? ctx.parsed.y}`) } } } };
+const passChart = new Chart(document.getElementById("passChart"), { type:"bar", data:{ labels:[], datasets:[{ data:[], borderRadius:8 }] }, options:{ ...common, indexAxis:"y", scales:{ x:{ max:100, ticks:{ callback:v=>v+"%" } } } } });
+const timeChart = new Chart(document.getElementById("timeChart"), { type:"bar", data:{ labels:[], datasets:[{ data:[], borderRadius:8 }] }, options:{ ...common, indexAxis:"y", scales:{ x:{ ticks:{ callback:v=>v+"m" } } } } });
+const difficultyChart = new Chart(document.getElementById("difficultyChart"), { type:"bar", data:{ labels:[], datasets:[{ label:"low", data:[], backgroundColor:"#18a058" }, { label:"mid", data:[], backgroundColor:"#f59e0b" }, { label:"high", data:[], backgroundColor:"#d64545" }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom" } }, scales:{ x:{ stacked:false }, y:{ max:100, ticks:{ callback:v=>v+"%" } } } } });
+const frontierChart = new Chart(document.getElementById("frontierChart"), { type:"scatter", data:{ datasets:[] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom" }, tooltip:{ callbacks:{ label:ctx=>`${ctx.raw.label}: ${ctx.raw.y.toFixed(1)}%, ${ctx.raw.x.toFixed(1)}m` } } }, scales:{ x:{ title:{ display:true, text:"Median wall time (min)" } }, y:{ min:55, max:85, title:{ display:true, text:"Pass rate (%)" } } } } });
+
+function renderFilters() {
+  const el = document.getElementById("harnessFilters");
+  for (const h of ["Codex","Claude Code","Cursor"]) {
+    const b = document.createElement("button");
+    b.textContent = h;
+    b.setAttribute("aria-pressed", "true");
+    b.onclick = () => {
+      if (activeHarnesses.has(h) && activeHarnesses.size > 1) activeHarnesses.delete(h); else activeHarnesses.add(h);
+      b.setAttribute("aria-pressed", activeHarnesses.has(h) ? "true" : "false");
+      buildCharts();
+    };
+    el.appendChild(b);
+  }
+}
+function renderTable() {
+  const tbody = document.querySelector("#conditionTable tbody");
+  tbody.innerHTML = "";
+  for (const c of filtered()) {
+    const tr = document.createElement("tr");
+    const cost = c.cost_per_pass == null ? "n/a" : "$" + c.cost_per_pass.toFixed(2);
+    tr.innerHTML = `<td>${c.label}</td><td>${c.harness}</td><td>${c.passed}/${c.runs}</td><td>${fmtPct(c.pass_rate)}</td><td>${fmtMin(c.median_wall_time_ms)}</td><td>${cost}</td><td>${c.timeouts}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+renderFilters();
+buildCharts();
+</script>
