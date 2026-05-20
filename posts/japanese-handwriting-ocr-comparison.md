@@ -92,9 +92,9 @@ YomiTokuはCC-BY-NC-SA-4.0なので商用利用には注意が必要です。そ
 | 4 | Gemini 3.1 Flash Lite Preview | API | 0.899 | 0.917 | 0.207 | 13.7s |
 | 5 | Claude 4.6 Opus | API | 0.897 | 0.896 | 0.225 | 74.9s |
 | 6 | Claude 4.7 Opus | API | 0.858 | 0.883 | 0.276 | 9.5s |
-| 7 | Azure AI Vision | API | 0.830 | 0.845 | 0.332 | 4.2s |
-| 8 | Google Cloud Vision | API | 0.820 | 0.783 | 0.509 | 2.2s |
-| 9 | YomiToku | Modal | 0.770 | 0.768 | 0.400 | 12.0s |
+| 7 | YomiToku v0.13.0 | Modal | 0.842 | 0.807 | 0.384 | 20.5s |
+| 8 | Azure AI Vision | API | 0.830 | 0.845 | 0.332 | 4.2s |
+| 9 | Google Cloud Vision | API | 0.820 | 0.783 | 0.509 | 2.2s |
 | 10 | GPT-5.5 | API | 0.755 | 0.830 | 0.301 | 98.1s |
 | 11 | GLM-OCR | Modal | 0.738 | 0.792 | 0.387 | 29.7s |
 | 12 | Chandra | Modal | 0.734 | 0.780 | 0.361 | 29.2s |
@@ -107,9 +107,9 @@ YomiTokuはCC-BY-NC-SA-4.0なので商用利用には注意が必要です。そ
 | 19 | Mistral OCR | API | 0.589 | 0.645 | 0.563 | 7.3s |
 | 20 | Nanonets-OCR-s | Modal | 0.557 | 0.597 | 0.615 | 69.1s |
 | 21 | DeepSeek-OCR | Modal | 0.446 | 0.530 | 0.671 | 35.4s |
-| 22 | Nemotron OCR v2 | Modal | 0.413 | 0.562 | 0.705 | 13.0s |
-| 23 | PaddleOCR | Modal | 0.353 | 0.394 | 0.784 | 12.8s |
-| 24 | NDLOCR-Lite | Modal | 0.271 | 0.394 | 0.915 | 10.5s |
+| 22 | NDLOCR-Lite v1.2.1 | Modal | 0.443 | 0.511 | 0.728 | 18.9s |
+| 23 | Nemotron OCR v2 | Modal | 0.413 | 0.562 | 0.705 | 13.0s |
+| 24 | PaddleOCR | Modal | 0.353 | 0.394 | 0.784 | 12.8s |
 | 25 | GOT-OCR 2.0 | Modal | 0.194 | 0.250 | 0.888 | 10.2s |
 | 26 | NDLOCR v2 | Modal | 0.064 | 0.087 | 0.958 | 28.7s |
 
@@ -125,11 +125,11 @@ Claude 4.6 Opusは5位でNLS 0.897で十分に高いのですが、新世代のC
 
 GPT-5.5は10位(NLS 0.755)、GPT-5.4は15位(NLS 0.714)で、APIモデルの中では中位グループです。世代が新しいGPT-5.5は前世代より0.04ポイント改善しているものの、それでもGemini系・Claude Opus系とは0.10以上の差があります。英語のOCRベンチマークでは強いモデル群ですが、日本語の手書きメモという条件では苦戦しています。BoC-F1はGPT-5.5で0.830、GPT-5.4で0.814と相応に高めなのに対してNLSが下がっているので、文字自体は読めているけど領域のマッチングでスコアを落としている可能性があります。GPT-5.5は処理時間も98.1sと長く、reasoningの時間に見合うほど精度が出ていないのが現状です。
 
-### OSSモデルではYomiTokuが健闘
+### OSSモデルではYomiTokuが断トツ
 
-OSSモデルの中ではYomiToku(9位, NLS 0.770)が最上位で、APIのGPT-5.5 (NLS 0.755) すら上回っています。日本語特化の設計が効いています。Chandra(12位)もNLS 0.734で健闘しています。
+OSSモデルの中ではYomiToku v0.13.0 (7位, NLS 0.842) が断トツの最上位で、APIの主要モデル (Azure / GCV / GPT-5.5) を軒並み上回り、上位 Claude 4.7 Opus (NLS 0.858) にあと0.016ポイントというところまで来ています。v0.12.x までは NLS 0.77 前後だったのが、v0.13.0 で「検出モデル及び手書き文字の認識モデルの強化」が入って大きく跳ね上がりました。日本語特化のOSSモデルとしては、現時点でほぼベスト・イン・クラスです。Chandra(12位)もNLS 0.734で健闘しています。
 
-一方でPaddleOCR、NDLOCR系は手書き文字がかなり厳しいです。NDLOCR v2は国立国会図書館が公開しているモデルで活字の印刷文書には強いのですが、手書きメモは守備範囲外のようです。
+一方でPaddleOCR、NDLOCR系は手書き文字がかなり厳しいです。とくにNDLOCR v2は国立国会図書館が公開しているモデルで活字の印刷文書には強いのですが、手書きメモは守備範囲外のようです。なお NDLOCR-Lite は v1.2.1 で手書き対応が大幅に改善されました(後述の追記を参照)。
 
 ### 無茶振りしたモデルたちの反応が面白い
 
@@ -151,7 +151,7 @@ Avg Timeを見ると面白い傾向が見えます。Google Cloud Visionが2.2s�
 
 GPT-5.4は123.4s、GPT-5.5でも98.1sと圧倒的に遅いです。reasoning effort: highで推論させているので仕方ないのですが、それだけ時間をかけてNLS 0.71〜0.76というのはコスパが悪いです。
 
-OSSモデルではYomiTokuが12.0sで最速クラスかつ精度も最上位(NLS 0.770)なので、速度・精度・コストの三拍子が揃っています。ただしModalのコールドスタートを含む時間なので、常時起動している環境ならもっと速いはずです。
+OSSモデルではYomiToku v0.13.0が20.5sでNLS 0.842と精度が大幅に伸びました。v0.12.x までは12.0s / NLS 0.77 だったので、新モデルは少し重くなった代わりに精度が大きく改善しています。それでも速度・精度・コストのバランスは十分良く、OSSで手元運用したい場合の第一候補です。ただしModalのコールドスタートを含む時間なので、常時起動している環境ならもっと速いはずです。
 
 ### 実際の出力を見てみる
 
@@ -165,7 +165,7 @@ OSSモデルではYomiTokuが12.0sで最速クラスかつ精度も最上位(NLS
 
 速度重視ならGoogle Cloud Vision(NLS 0.820, 2.2s)やAzure AI Vision(NLS 0.830, 4.2s)が選択肢に入ります。精度は上位モデルに劣りますが、大量のメモを一気に処理したいケースでは現実的です。
 
-OSSモデルで手元で動かしたい場合はYomiToku(NLS 0.770, 12.0s)が精度・速度・コストの三拍子揃っています。
+OSSモデルで手元で動かしたい場合はYomiToku v0.13.0 (NLS 0.842, 20.5s) が精度・速度・コストの三拍子揃っています。APIの中位グループを軒並み上回るので、ローカル運用でも十分実用水準です。
 
 ただし注意点として、今回の評価は手書きメモ6枚と少数なので、画像数を増やすとランキングが変動する可能性は十分あります。評価基盤は[公開している](https://github.com/nyosegawa/ocr-comparison)ので、自分のメモで試してみるのが一番確実です。
 
@@ -173,7 +173,7 @@ OSSモデルで手元で動かしたい場合はYomiToku(NLS 0.770, 12.0s)が精
 
 - 日本語手書きメモのOCRに使えるモデルを探して26モデルを比較しました
 - Gemini 3.5 Flash (NLS 0.927) が最高精度で、Proより速くて精度も上回っています
-- OSSではYomiToku (NLS 0.770) が健闘しています
+- OSSではYomiToku v0.13.0 (NLS 0.842) が断トツ、Azure/GCV/GPT-5.5 を軒並み上回る水準まで伸びました
 - 評価コードは [ocr-comparison](https://github.com/nyosegawa/ocr-comparison) で公開しています
 
 ## 追記 (2026-03-17): GLM-OCRを追加して19モデルに
@@ -232,7 +232,7 @@ NVIDIAの[Nemotron OCR v2](https://huggingface.co/nvidia/nemotron-ocr-v2)を追�
 
 v2_englishとv2_multilingualの2バリアントがあり、v2_multilingualは英語・中国語・日本語・韓国語・ロシア語に対応しています。model cardに日本語対応と明記されているので、今回はv2_multilingualを使いました。14,244文字の文字セットを持ち、行レベルの認識を行います。
 
-結果はNLS 0.413で22位。DeepSeek-OCR (0.446) の下、PaddleOCR (0.353) の上という位置づけです。日本語対応とはいえ活字・印刷文書向けの設計なので、手書きはやはり守備範囲外のようです。
+結果はNLS 0.413で23位。DeepSeek-OCR (0.446) の下、PaddleOCR (0.353) の上という位置づけです (NDLOCR-Lite v1.2.1 が NLS 0.443 で間に入りました)。日本語対応とはいえ活字・印刷文書向けの設計なので、手書きはやはり守備範囲外のようです。
 
 出力を見ると、日付パターン (`3/11`, `3/13`, `3/15`) や英単語 (`Harmony`, `ASR`, `VSR`) はある程度拾えていて、検出器自体はちゃんと動いています。一方で日本語の手書き文字は中国語の簡体字（「投资家」「绝」など）として出力されるケースが多く、DeepSeek-OCRの中国語リークと似た傾向が見えました。多言語文字セットに中国語が含まれているので、判別が曖昧な手書き文字を中国語側に倒してしまうのかもしれません。
 
@@ -275,6 +275,28 @@ Anthropicの[Claude 4.7 Opus](https://www.anthropic.com/news/claude-opus-4-7)を
 サンプル別に見ると、サンプル3 (Manus Clone系の整理メモ) で NLS 0.976 と4.6 Opusと同等水準を維持している一方、くずし字が激しいサンプル1 (NLS 0.751) では「VSR つよくなる」「自作キーの腐敗について」と推測寄りの出力になっています。
 
 上の結果テーブルとモデル一覧、結論セクションも更新済みです。
+
+## 追記 (2026-05-20): YomiToku v0.13.0 / NDLOCR-Lite v1.2.1 を再評価
+
+OSSの日本語OCRモデル2つに大きなアップデートが入っていたので、再評価しました。
+
+### YomiToku v0.13.0
+
+[YomiToku v0.13.0](https://github.com/kotaro-kinoshita/yomitoku/releases/tag/v0.13.0) (2026-05-14リリース) で「検出モデル及び手書き文字の認識モデルの強化」が入りました。
+
+再評価結果は NLS 0.842 で **9位 → 7位**に大幅ジャンプ。前バージョン (NLS 0.770) から +0.072 ポイントの改善で、上のClaude 4.7 Opus (0.858) にあと0.016までの位置に迫っています。API のAzure AI Vision (0.830) / Google Cloud Vision (0.820) / GPT-5.5 (0.755) を軒並み上回るスコアで、OSS の日本語 OCR としては現時点でほぼベスト・イン・クラスです。
+
+サンプル別の数字でも改善が見えていて、サンプル1 (NLS 0.608 → 0.773)、サンプル2 (0.626 → 0.679) と「Coding Agent」「Application」のような英単語混在の手書きで読みが安定するようになりました。一方で処理時間は 12.0s → 20.5s に増えていて、検出・認識モデルが少し重くなった分のトレードオフがあります。それでもAPI系の中位モデルと同等水準の精度がローカルで出るのは大きく、ローカル運用したい場合の第一候補です。
+
+### NDLOCR-Lite v1.2.1
+
+[NDLOCR-Lite v1.2.1](https://github.com/ndl-lab/ndlocr-lite/releases/tag/1.2.1) (2026-04-22リリース) でも「昨年度作成した学習データの追加に伴う文字認識モデルの改善(日本語手書き文字・英文タイプライター文字の大幅な改善)」というアップデートが入りました。手書きを直接ターゲットにしたチューニングです。
+
+再評価結果は NLS 0.443 で **24位 → 22位**。前バージョン (NLS 0.271) から +0.172 ポイントとほぼ倍近い改善で、DeepSeek-OCR (NLS 0.446) のすぐ下まで来ました。Nemotron OCR v2 (NLS 0.413)、PaddleOCR (NLS 0.353)、GOT-OCR 2.0 (NLS 0.194) といった「日本語手書きが苦手な」OSSモデル群を明確に抜けています。
+
+ただし上位グループ (NLS 0.7 以上) との差は依然として大きく、CER 0.728 と文字レベルの誤り率もかなり高めです。「以前は使えなかったが、ある程度読めるようになってきた」フェーズで、まだ実用には他のOSSモデルに分があります。それでも、国立国会図書館チームが手書きデータで継続的に学習を改善している姿勢自体は心強いです。
+
+上の結果テーブルも更新済みです。
 
 ## Appendix: 画像別OCR出力例
 
@@ -435,7 +457,15 @@ olmOCR-2 (NLS=0.681)
 ・ 任課者の発表について
 ```
 
-YomiToku (NLS=0.608)
+YomiToku v0.13.0 (NLS=0.773)
+```
+Codinglint ant a Applicationtionts
+麻雀AIをCodingAgentで
+USR →31C1かん
+仕様もの腐敗について
+```
+
+YomiToku v0.12.x (NLS=0.608)
 ```
 S/mairmoi day 6 yha zuag (aipe).
 、麻雀AZをCodingAgutで
@@ -478,6 +508,14 @@ Nemotron OCR v2 (NLS=0.307)
 。
 -VSR.-3-346、
 -
+```
+
+NDLOCR-Lite v1.2.1 (NLS=0.591)
+```
+Coding/pent att Appliontiontion/S
+、麻養ALとCodighy ganer
+, VSR つろ1しかん
+- 仕後書の補助について、
 ```
 
 PaddleOCR (NLS=0.000)
@@ -746,7 +784,19 @@ Web App が Agent と wrap に渡す
 (外部Skill)
 ```
 
-YomiToku (NLS=0.626)
+YomiToku v0.13.0 (NLS=0.679)
+```
+pernission mode auto kin
+作物ものはわります
+4 SDKE
+比較したい
+Harmony とくDKを渡して
+Agent stall 6- Web App 2 wrap 13 .
+Web App が" Agail & wrap TI TES
+(AziSlill,
+```
+
+YomiToku v0.12.x (NLS=0.626)
 ```
 perallsilon mode auto khi.
 1.4/14761.4/13/ .
@@ -794,6 +844,21 @@ Appar delllo  wb  Appp  waa p ttttt
 web App on Agene   wrap 11 222
 by
 (AriShidd)
+```
+
+NDLOCR-Lite v1.2.1 (NLS=0.380)
+```
+COCONCOCONDESBEDEDD
+pornitssion mode auto kthe
+例前1の6676
+L Spkr
+ettes.
+Marmony e CPK & 抜して、
+Mare the the the the the the anwer
+Harmony 2 <pk e ine.
+Apeestinl or wab ApP & wrap thiscor
+wab App by Agent & weap 195
+(A-25
 ```
 
 PaddleOCR (NLS=0.083)
