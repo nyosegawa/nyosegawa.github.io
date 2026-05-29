@@ -185,9 +185,15 @@ function buildCharts() {
   renderTable();
 }
 
-const common = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ctx.raw?.label || (ctx.parsed.x ? `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%, ${ctx.parsed.x.toFixed(1)}m` : `${ctx.parsed.x ?? ctx.parsed.y}`) } } } };
-const passChart = new Chart(document.getElementById("passChart"), { type:"bar", data:{ labels:[], datasets:[{ data:[], borderRadius:8 }] }, options:{ ...common, indexAxis:"y", scales:{ x:{ max:100, ticks:{ callback:v=>v+"%" } } } } });
-const timeChart = new Chart(document.getElementById("timeChart"), { type:"bar", data:{ labels:[], datasets:[{ data:[], borderRadius:8 }] }, options:{ ...common, indexAxis:"y", scales:{ x:{ ticks:{ callback:v=>v+"m" } } } } });
+const common = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } };
+const tooltipTitle = items => items[0]?.label || "";
+const passTooltip = { callbacks:{ title: tooltipTitle, label: ctx => {
+  const row = filtered()[ctx.dataIndex];
+  return `Pass rate: ${ctx.parsed.x.toFixed(1)}% (${row.passed}/${row.runs})`;
+} } };
+const timeTooltip = { callbacks:{ title: tooltipTitle, label: ctx => `Median wall time: ${ctx.parsed.x.toFixed(1)}m` } };
+const passChart = new Chart(document.getElementById("passChart"), { type:"bar", data:{ labels:[], datasets:[{ data:[], borderRadius:8 }] }, options:{ ...common, plugins:{ ...common.plugins, tooltip: passTooltip }, indexAxis:"y", scales:{ x:{ max:100, ticks:{ callback:v=>v+"%" } } } } });
+const timeChart = new Chart(document.getElementById("timeChart"), { type:"bar", data:{ labels:[], datasets:[{ data:[], borderRadius:8 }] }, options:{ ...common, plugins:{ ...common.plugins, tooltip: timeTooltip }, indexAxis:"y", scales:{ x:{ ticks:{ callback:v=>v+"m" } } } } });
 const difficultyChart = new Chart(document.getElementById("difficultyChart"), { type:"bar", data:{ labels:[], datasets:[{ label:"low", data:[], backgroundColor:"#18a058" }, { label:"mid", data:[], backgroundColor:"#f59e0b" }, { label:"high", data:[], backgroundColor:"#d64545" }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom" } }, scales:{ x:{ stacked:false }, y:{ max:100, ticks:{ callback:v=>v+"%" } } } } });
 const frontierChart = new Chart(document.getElementById("frontierChart"), { type:"scatter", data:{ datasets:[] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom" }, tooltip:{ callbacks:{ label:ctx=>`${ctx.raw.label}: ${ctx.raw.y.toFixed(1)}%, ${ctx.raw.x.toFixed(1)}m` } } }, scales:{ x:{ title:{ display:true, text:"Median wall time (min)" } }, y:{ min:55, max:85, title:{ display:true, text:"Pass rate (%)" } } } } });
 
