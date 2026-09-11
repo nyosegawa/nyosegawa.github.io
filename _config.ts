@@ -7,7 +7,8 @@ const site = lume({
   location: new URL("https://nyosegawa.com"),
 });
 
-site.use(katex());
+// KaTeX writes its CSS to site.options.cssFile (/style.css by default), but the layout only loads /styles.css
+site.use(katex({ cssFile: "/styles.css" }));
 site.use(blog({
   date: {
     formats: {
