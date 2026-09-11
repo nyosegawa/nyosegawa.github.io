@@ -400,7 +400,11 @@ z_w = \frac{\delta_w}{\sqrt{\frac{1}{y_i + a_w} + \frac{1}{y_j + a_w}}}
 excess vocabulary は、語ごとにAI以前の4年の文書頻度に直線を当てはめ、傾きを `b_w` として、2026年の予測値 `q_w` との差と比を見ます。傾きが負のときに0とするのは、もともと減っていた語の増加を大きく見積もらないためです。Kobakらは2021年と2022年の2点から2年先の2024年を予測していますが、今回は4年分に直線を当てはめて4年先を予測しています。
 
 ```math
-q_w = p_{w,2022} + 4 \times \max(b_w, 0), \quad \Delta_w = p_{w,2026} - q_w, \quad r_w = \frac{p_{w,2026}}{q_w}
+\begin{aligned}
+q_w &= p_{w,2022} + 4 \times \max(b_w, 0) \\
+\Delta_w &= p_{w,2026} - q_w \\
+r_w &= \frac{p_{w,2026}}{q_w}
+\end{aligned}
 ```
 
 探索的な指標の全結果です。差は予測値との差で、単位はAI以前の標準偏差です。

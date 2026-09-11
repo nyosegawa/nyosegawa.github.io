@@ -912,3 +912,9 @@ a.portfolio-card-link:hover h3 {
     background-color: #2e3a4a;
   }
 }
+
+/* Let wide display math scroll inside its own box instead of widening the page */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
