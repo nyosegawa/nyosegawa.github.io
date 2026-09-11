@@ -390,7 +390,10 @@ d = \frac{m_{2026} - \hat{m}_{2026}}{s_{\mathrm{pre}}}
 対数オッズ比は、Monroeらの informative Dirichlet prior を使いました。語 `w` の出現回数を2026年で `y_i`、AI以前で `y_j`、全期間で `a_w` とし、それぞれの総語数を `n_i`、`n_j`、`a_0` とします。
 
 ```math
-\delta_w = \log\frac{y_i + a_w}{n_i + a_0 - y_i - a_w} - \log\frac{y_j + a_w}{n_j + a_0 - y_j - a_w}
+\begin{aligned}
+\delta_w &= \log\frac{y_i + a_w}{n_i + a_0 - y_i - a_w} \\
+&\quad - \log\frac{y_j + a_w}{n_j + a_0 - y_j - a_w}
+\end{aligned}
 ```
 
 ```math
