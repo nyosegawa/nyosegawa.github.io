@@ -15,6 +15,10 @@ site.use(blog({
       HUMAN_DATE: "yyyy-MM-dd",
     },
   },
+  // Prism knows only markup, CSS, C-like and JavaScript until a language is loaded; the rest stayed plain text
+  prism: {
+    autoloadLanguages: true,
+  },
 }));
 site.use(redirects({ output: "html" }));
 
