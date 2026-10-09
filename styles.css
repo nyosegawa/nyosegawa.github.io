@@ -1006,3 +1006,113 @@ a.portfolio-card-link:hover h3 {
   overflow-x: auto;
   overflow-y: hidden;
 }
+
+/* ====== Promotion box ====== */
+
+.promo {
+  --promo-bg: linear-gradient(135deg, #f5f2fe 0%, #eef4ff 100%);
+  --promo-border: #e2e1f6;
+  --promo-label-bg: #e9e4fc;
+  --promo-label-text: #6655c4;
+  --promo-accent: #4a63d9;
+  --promo-accent-hover: #3a52c4;
+  --promo-secondary-border: #c9d1f4;
+  --promo-shadow: 0 8px 24px rgba(70, 80, 170, 0.08);
+  background: var(--promo-bg);
+  border: 1px solid var(--promo-border);
+  border-radius: 1.2em;
+  box-shadow: var(--promo-shadow);
+  padding: 1.2em 1.4em 1.3em;
+  margin: 2.2em 0;
+}
+
+.promo > * + * {
+  margin-top: 0.6em;
+}
+
+.promo-label {
+  display: inline-block;
+  font-size: 0.78em;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  color: var(--promo-label-text);
+  background: var(--promo-label-bg);
+  border-radius: 999px;
+  padding: 0.15em 0.9em;
+  margin: 0;
+}
+
+.promo-message {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: var(--color-heading);
+  line-height: 1.7;
+}
+
+.promo img {
+  display: block;
+  margin: 0;
+  border-radius: 0.9em;
+  box-shadow: 0 4px 16px rgba(60, 70, 160, 0.12);
+}
+
+.promo-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em;
+  margin-bottom: 0;
+}
+
+.promo .promo-button {
+  display: inline-block;
+  font-size: 0.9em;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 0.45em 1.3em;
+  border: 1px solid var(--promo-secondary-border);
+  color: var(--promo-accent);
+  background: transparent;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.promo .promo-button:hover {
+  border-color: var(--promo-accent);
+  color: var(--promo-accent-hover);
+}
+
+.promo .promo-primary {
+  background: var(--promo-accent);
+  border-color: var(--promo-accent);
+  color: #fff;
+}
+
+.promo .promo-primary:hover {
+  background: var(--promo-accent-hover);
+  border-color: var(--promo-accent-hover);
+  color: #fff;
+}
+
+[data-theme="dark"] .promo {
+  --promo-bg: linear-gradient(135deg, #252840 0%, #1f2836 100%);
+  --promo-border: #343b52;
+  --promo-label-bg: #363158;
+  --promo-label-text: #cdc4ff;
+  --promo-accent: #7b8ff5;
+  --promo-accent-hover: #9aa9ff;
+  --promo-secondary-border: #46507a;
+  --promo-shadow: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .promo {
+    --promo-bg: linear-gradient(135deg, #252840 0%, #1f2836 100%);
+    --promo-border: #343b52;
+    --promo-label-bg: #363158;
+    --promo-label-text: #cdc4ff;
+    --promo-accent: #7b8ff5;
+    --promo-accent-hover: #9aa9ff;
+    --promo-secondary-border: #46507a;
+    --promo-shadow: none;
+  }
+}
