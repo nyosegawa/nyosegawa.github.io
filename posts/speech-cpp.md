@@ -574,6 +574,26 @@ ASISTは、読み上げも音声認識もspeech.cppのワーカーで動かす�
 - M5のtensor APIの不具合は、速さより正しさを取って、tensor APIを止めて避けました。FastConformerの速さはNeMo-Speech.cppにまだ負けているので、次に詰めます
 - 長尺の録音はSilero VADの区間ごとに書き起こすことで文が落ちることが大きく減り、話しているそばからの書き起こしはOpenAIのRealtime APIと同じ形で使えるようになりました
 
+## 追記: 0.8.3でFastConformerを高速化しました (2026-10-10)
+
+上で「次のリリースで詰めるつもりです」と書いたFastConformerを、[speech.cpp 0.8.3](https://github.com/nyosegawa/speech.cpp/releases/tag/v0.8.3)で高速化しました。FFTの中で繰り返していたメモリの確保、入力が変わっても同じ位置情報の計算、デコーダーの計算グラフの作り直しを減らしています。
+
+0.8.2と0.8.3を同じ音声で交互に動かすと、文字起こしが返るまでの時間の中央値は次のようになりました。どれもF16で、読み込みと初回のウォームアップを除いた計測です。
+
+| モデル | M5 (Metal)、0.8.2 → 0.8.3 | RTX 2080 (Vulkan)、0.8.2 → 0.8.3 |
+|---|---|---|
+| ReazonSpeech NeMo v2、greedy | 72 → 54 ms | 76 → 47 ms |
+| parakeet-tdt-0.6b-v3 | 102 → 93 ms | 128 → 82 ms |
+| parakeet-tdt_ctc-0.6b-ja | 56 → 52 ms | 85 → 40 ms |
+
+日本語の速度はCommon Voiceの先頭100件のうちVADで残った99件を3回、英語はFLEURSの300件のうち残った299件を1回ずつ測りました。本文の日本語4,483件の表とは件数が違うので、その表を置き換える数字ではありません。ReazonSpeechの標準のbeam searchも、M5では104 → 85 msになりました。
+
+精度はM5で別に全件を確認しました。記事の前回計測と比べて、ReazonSpeechのgreedyは日本語4,483件でCERが12.50 → 12.49%、表記の揺れを許したCERは7.69%のままです。VADで除外された4件を除く4,479件中5件で文字起こしが変わり、空の結果は4件のままでした。parakeet-v3の英語300件もWERは8.76%のままです。
+
+NeMo-Speech.cppとも同じ音声を交互に処理させると、Windowsではほぼ同じ速さになりました。M5ではNeMo-Speech.cppのほうがReazonSpeechで約3 ms、parakeet-v3で約7 ms速いですが、NeMo側もtensor APIを止めると同等以上でした。speech.cppでは、前述のtensor APIの回避策を保ったままです。詳しい条件とp90は[PRの計測結果](https://github.com/nyosegawa/speech.cpp/pull/91#issuecomment-6085048115)にあります。
+
+モデルのファイルは変えていません。speech.cpp本体を更新すれば、手元のGGUFをそのまま使えます。
+
 ## Appendix
 
 ### 計測方法

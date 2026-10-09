@@ -573,6 +573,26 @@ ASIST now runs both synthesis and recognition through speech.cpp workers and no 
 - I chose correctness over speed by disabling the M5 tensor API affected by the bug. FastConformer still trails NeMo-Speech.cpp in speed, which is something to work on next.
 - Transcribing long recordings by Silero VAD regions greatly reduces dropped sentences, and live transcription works through an OpenAI-compatible Realtime interface.
 
+## Update: faster FastConformer in 0.8.3 (2026-10-10)
+
+The FastConformer work I mentioned above is now in [speech.cpp 0.8.3](https://github.com/nyosegawa/speech.cpp/releases/tag/v0.8.3). I reduced repeated memory allocation inside the FFT, cached position computations that stay the same across inputs, and reused decoder computation graphs.
+
+Running 0.8.2 and 0.8.3 alternately on the same audio gave these median times to a returned transcript. All models use F16 weights; loading and the first warmup request are excluded.
+
+| Model | M5 (Metal), 0.8.2 → 0.8.3 | RTX 2080 (Vulkan), 0.8.2 → 0.8.3 |
+|---|---|---|
+| ReazonSpeech NeMo v2, greedy | 72 → 54 ms | 76 → 47 ms |
+| parakeet-tdt-0.6b-v3 | 102 → 93 ms | 128 → 82 ms |
+| parakeet-tdt_ctc-0.6b-ja | 56 → 52 ms | 85 → 40 ms |
+
+The Japanese timing sample uses the first 100 Common Voice inputs, 99 retained by VAD, repeated three times. English uses 300 FLEURS inputs, 299 retained by VAD, once each. These are different sample counts from the 4,483-input Japanese tables above, so they do not replace those results. ReazonSpeech's default beam search also improved from 104 to 85 ms on M5.
+
+I checked accuracy separately on the complete sets on M5. Compared with the original article's run, ReazonSpeech greedy's CER on the 4,483 Japanese inputs changed from 12.50% to 12.49%, while CER allowing spelling variants stayed at 7.69%. Five of the 4,479 VAD-retained transcripts changed; empty results stayed at four. Parakeet v3's WER on 300 English inputs stayed at 8.76%.
+
+Alternating requests with NeMo-Speech.cpp on the same audio now gives roughly equal speed on Windows. On M5, NeMo-Speech.cpp remains about 3 ms faster for ReazonSpeech and 7 ms faster for Parakeet v3, but disabling its tensor API makes speech.cpp as fast or faster. speech.cpp keeps the tensor API workaround described above. The [PR's measurement report](https://github.com/nyosegawa/speech.cpp/pull/91#issuecomment-6085048115) has the full conditions and p90 values.
+
+The model files have not changed. Updating speech.cpp is enough; existing GGUF files still work.
+
 ## Appendix
 
 ### Measurement method
