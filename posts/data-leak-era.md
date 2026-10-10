@@ -44,6 +44,15 @@ author: 逆瀬川ちゃん
 
 自分がどれだけ気をつけていても、漏洩は止められません。次は、流出した情報がそのあとどう使われるのかを見ていきます。
 
+<aside class="promo">
+<p class="promo-label">ここでいったんCMです。</p>
+<p class="promo-message">デスクトップ向けのアシスタントを作りました！よかったら使ってみてください。</p>
+
+[![ASIST: 話しかけるだけで、予定もメールも片づく。Mac と Windows で使えるリアルタイムアシスタント](/img/speech-cpp/asist-banner.jpg)](https://asist-agent.com/)
+
+<p class="promo-links"><a class="promo-button promo-primary" href="https://asist-agent.com/">公式サイトを見る</a><a class="promo-button" href="https://github.com/nyosegawa/asist">GitHub</a></p>
+</aside>
+
 ## 流出したら何が起きるのか
 
 ### ばらばらの情報が1人分にまとまる
