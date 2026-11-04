@@ -1,6 +1,6 @@
 ---
-title: "Open for Work (From April 2026)"
-description: "I'm open to freelance/contract work starting April 2026."
+title: "Work Inquiries"
+description: "I take inquiries about AI agent development, speech recognition and synthesis, coding agent setups, technical research, and more."
 date: 2026-03-27
 tags: [お仕事募集]
 author: 逆瀬川ちゃん
@@ -9,13 +9,13 @@ lang: en
 
 Hi there! This is Sakasegawa-chan ([@gyakuse](https://x.com/gyakuse))!
 
-I've been doing so much solo dev work that my bank account has reached zero, so I'm opening up for business!
+This page explains how to contact me about work, what I can help with, and what I've built so far.
 
 <!--more-->
 
-## Open for work
+## Work inquiries
 
-I'm currently pausing new ongoing/retainer engagements. I'm only taking one-off consulting and advisory work at the moment.
+Feel free to reach out about development projects, technical research, consulting, or even a quick question. Once I know the details and timing, I'll let you know whether I can take it on.
 
 ### How to reach me
 
@@ -28,8 +28,8 @@ Subject: Inquiry about a project
 
 - Your name / company:
 - Overview of the request:
-- Desired start date:
-- Hourly rate:
+- Desired timing:
+- Budget:
 - Other notes:
 ```
 
@@ -41,6 +41,7 @@ Roughly, I can help with things like:
 
 - Designing and building AI agents and AI applications
 - Setting up and optimizing coding agent environments (Claude Code, Codex, Agent Skills, MCP, Harness)
+- Building voice conversation applications and porting speech recognition and synthesis models to C++ (ggml)
 - Building AI/ML pipelines for speech recognition (ASR), OCR, structured data extraction, etc.
 - Model training: LLM post-training (SFT, RLHF, etc.) and ASR model fine-tuning
 - Prompt engineering and prompt injection defenses
@@ -53,7 +54,12 @@ You can get a feel for what I've been up to lately on my [blog](https://nyosegaw
 
 ## What I've built
 
-A quick roundup of recent work.
+A quick roundup of what I've built so far.
+
+### Speech AI
+
+- [speech.cpp](https://github.com/nyosegawa/speech.cpp): a ggml-based engine that handles speech synthesis, speech recognition, voice activity detection, and speaker diarization from one command. It runs on Metal, Vulkan, and the CPU, and can also serve an OpenAI-compatible API. Released under the MIT License ([introduction](https://nyosegawa.com/en/posts/speech-cpp/))
+- [ASIST](https://asist-agent.com/): a voice assistant for Mac and Windows. Talk to it and it answers aloud, shows your schedule and mail as cards, and hands longer work to an agent. Its speech processing runs on speech.cpp ([introduction](https://nyosegawa.com/en/posts/asist-realtime-voice-assistant/))
 
 ### AI agents
 
